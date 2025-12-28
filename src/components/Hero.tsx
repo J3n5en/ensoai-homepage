@@ -74,7 +74,7 @@ export function Hero() {
         </div>
 
         {/* Demo Preview - Hidden on mobile */}
-        <div className="hidden lg:block relative">
+        <div id="demo-preview" className="hidden lg:block relative">
           <EnsoAIDemoPreview />
         </div>
       </div>

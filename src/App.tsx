@@ -113,8 +113,11 @@ function App() {
                         <div className="flex flex-wrap gap-2 pt-2">
                             {Object.keys(themes).map(theme => (
                                 <button
-                                    key={theme} 
-                                    onClick={() => setCurrentTheme(theme)}
+                                    key={theme}
+                                    onClick={() => {
+                                        setCurrentTheme(theme);
+                                        document.getElementById('demo-preview')?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                                    }}
                                     className={clsx(
                                         "px-4 py-1.5 text-sm font-medium rounded-full border transition-all duration-300 cursor-pointer",
                                         currentTheme === theme 
