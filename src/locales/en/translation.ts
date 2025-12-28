@@ -62,6 +62,21 @@ export default {
       community: "Community",
       rights: "EnsoAI. All rights reserved.",
       designed: "Designed with ♥ for developers."
+    },
+    demo: {
+      searchRepo: "Search repositories",
+      addRepo: "Add repository",
+      searchWorktree: "Search worktree",
+      tabs: {
+        agent: "Agent",
+        files: "Files",
+        terminal: "Terminal",
+        sourceControl: "Source Control"
+      },
+      status: {
+        bypassPermissions: "bypass permissions on",
+        cycleHint: "(shift+tab to cycle)"
+      }
     }
   }
 }

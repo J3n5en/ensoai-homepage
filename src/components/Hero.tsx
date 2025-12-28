@@ -2,14 +2,15 @@ import { Button } from './Button';
 import { Github, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { EnsoAIDemoPreview } from './EnsoAIDemoPreview';
 
 export function Hero() {
   const { t } = useTranslation();
 
   return (
-    <section className="relative pt-40 pb-32 overflow-hidden bg-grid-pattern [background-size:24px_24px]">
+    <section className="relative pt-40 pb-20 overflow-hidden bg-grid-pattern [background-size:24px_24px]">
       <div className="absolute inset-0 bg-gradient-to-b from-ayu-bg/80 via-ayu-bg/50 to-ayu-bg/80 pointer-events-none"></div>
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-4xl mx-auto">
           <motion.div
@@ -21,8 +22,8 @@ export function Hero() {
             <span className="w-2 h-2 rounded-full bg-ayu-accent"></span>
             {t('hero.badge')}
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -36,8 +37,8 @@ export function Hero() {
               </svg>
             </span>
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -45,24 +46,24 @@ export function Hero() {
           >
             {t('hero.subtitle')}
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16"
           >
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="rounded-full px-8 h-14 text-base font-semibold shadow-xl shadow-ayu-accent/10 hover:shadow-ayu-accent/20 hover:-translate-y-0.5 transition-all"
               onClick={() => window.open('https://github.com/j3n5en/EnsoAI/releases/latest', '_blank')}
             >
               {t('hero.cta.download')}
               <Download className="w-4 h-4 ml-2" />
             </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
+            <Button
+              variant="outline"
+              size="lg"
               className="rounded-full px-8 h-14 text-base font-semibold bg-ayu-panel hover:bg-ayu-line/50 hover:-translate-y-0.5 transition-all"
               onClick={() => window.open('https://github.com/j3n5en/EnsoAI', '_blank')}
             >
@@ -70,6 +71,11 @@ export function Hero() {
               <Github className="w-4 h-4 ml-2" />
             </Button>
           </motion.div>
+        </div>
+
+        {/* Demo Preview - Hidden on mobile */}
+        <div className="hidden lg:block relative">
+          <EnsoAIDemoPreview />
         </div>
       </div>
     </section>

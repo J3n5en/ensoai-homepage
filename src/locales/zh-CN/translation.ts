@@ -62,6 +62,21 @@ export default {
       community: "社区",
       rights: "EnsoAI. 保留所有权利。",
       designed: "为开发者 ♥ 设计。"
+    },
+    demo: {
+      searchRepo: "搜索仓库",
+      addRepo: "添加仓库",
+      searchWorktree: "搜索 worktree",
+      tabs: {
+        agent: "Agent",
+        files: "文件",
+        terminal: "终端",
+        sourceControl: "源代码管理"
+      },
+      status: {
+        bypassPermissions: "bypass permissions on",
+        cycleHint: "(shift+tab to cycle)"
+      }
     }
   }
 }
