@@ -1,12 +1,13 @@
 import { clsx } from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
 import { Brain, GitBranch, GitMerge, Layers, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export function Features() {
 	const { t } = useTranslation();
 	const [activeFeature, setActiveFeature] = useState(0);
+	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const features = [
 		{
@@ -46,13 +47,28 @@ export function Features() {
 		},
 	];
 
-	// Optional: Auto-rotate features if not interacted with
-	useEffect(() => {
-		const timer = setInterval(() => {
+	const startTimer = useCallback(() => {
+		if (timerRef.current) {
+			clearInterval(timerRef.current);
+		}
+		timerRef.current = setInterval(() => {
 			setActiveFeature((prev) => (prev + 1) % features.length);
 		}, 5000);
-		return () => clearInterval(timer);
 	}, [features.length]);
+
+	const handleFeatureClick = useCallback((index: number) => {
+		setActiveFeature(index);
+		startTimer(); // Reset timer on user interaction
+	}, [startTimer]);
+
+	useEffect(() => {
+		startTimer();
+		return () => {
+			if (timerRef.current) {
+				clearInterval(timerRef.current);
+			}
+		};
+	}, [startTimer]);
 
 	return (
 		<section
@@ -75,7 +91,7 @@ export function Features() {
 						{features.map((feature, index) => (
 							<button
 								key={index}
-								onClick={() => setActiveFeature(index)}
+								onClick={() => handleFeatureClick(index)}
 																	className={clsx(
 																		"text-left p-6 rounded-2xl transition-all duration-300 border group relative overflow-hidden",
 																		activeFeature === index
