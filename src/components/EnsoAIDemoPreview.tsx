@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -273,11 +273,34 @@ const GhosttyMascot = () => (
 );
 
 // Claude Session Chat with simulated conversation
-function ClaudeSessionChat({ workspacePath }: { workspacePath: string }) {
-  const [visibleMessages, setVisibleMessages] = useState<typeof claudeConversation>([]);
-  const [isComplete, setIsComplete] = useState(false);
+function ClaudeSessionChat({
+  workspacePath,
+  worktreeKey,
+  hasPlayed,
+  onComplete
+}: {
+  workspacePath: string;
+  worktreeKey: string;
+  hasPlayed: boolean;
+  onComplete: () => void;
+}) {
+  const [visibleMessages, setVisibleMessages] = useState<typeof claudeConversation>(
+    hasPlayed ? claudeConversation : []
+  );
+  const [isComplete, setIsComplete] = useState(hasPlayed);
 
   useEffect(() => {
+    // If already played, show all messages immediately
+    if (hasPlayed) {
+      setVisibleMessages(claudeConversation);
+      setIsComplete(true);
+      return;
+    }
+
+    // Reset state for new worktree
+    setVisibleMessages([]);
+    setIsComplete(false);
+
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     claudeConversation.forEach((msg, index) => {
@@ -285,13 +308,14 @@ function ClaudeSessionChat({ workspacePath }: { workspacePath: string }) {
         setVisibleMessages(prev => [...prev, msg]);
         if (index === claudeConversation.length - 1) {
           setIsComplete(true);
+          onComplete();
         }
       }, msg.delay);
       timers.push(timer);
     });
 
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [worktreeKey, hasPlayed, onComplete]);
 
   return (
     <motion.div
@@ -392,11 +416,32 @@ function ClaudeSessionChat({ workspacePath }: { workspacePath: string }) {
 }
 
 // Codex Session Chat with simulated conversation
-function CodexSessionChat({ workspacePath }: { workspacePath: string }) {
-  const [visibleMessages, setVisibleMessages] = useState<typeof codexConversation>([]);
-  const [isComplete, setIsComplete] = useState(false);
+function CodexSessionChat({
+  workspacePath,
+  worktreeKey,
+  hasPlayed,
+  onComplete
+}: {
+  workspacePath: string;
+  worktreeKey: string;
+  hasPlayed: boolean;
+  onComplete: () => void;
+}) {
+  const [visibleMessages, setVisibleMessages] = useState<typeof codexConversation>(
+    hasPlayed ? codexConversation : []
+  );
+  const [isComplete, setIsComplete] = useState(hasPlayed);
 
   useEffect(() => {
+    if (hasPlayed) {
+      setVisibleMessages(codexConversation);
+      setIsComplete(true);
+      return;
+    }
+
+    setVisibleMessages([]);
+    setIsComplete(false);
+
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     codexConversation.forEach((msg, index) => {
@@ -404,13 +449,14 @@ function CodexSessionChat({ workspacePath }: { workspacePath: string }) {
         setVisibleMessages(prev => [...prev, msg]);
         if (index === codexConversation.length - 1) {
           setIsComplete(true);
+          onComplete();
         }
       }, msg.delay);
       timers.push(timer);
     });
 
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [worktreeKey, hasPlayed, onComplete]);
 
   return (
     <motion.div
@@ -496,11 +542,32 @@ function CodexSessionChat({ workspacePath }: { workspacePath: string }) {
 }
 
 // Gemini Session Chat with simulated conversation
-function GeminiSessionChat({ workspacePath }: { workspacePath: string }) {
-  const [visibleMessages, setVisibleMessages] = useState<typeof geminiConversation>([]);
-  const [isComplete, setIsComplete] = useState(false);
+function GeminiSessionChat({
+  workspacePath,
+  worktreeKey,
+  hasPlayed,
+  onComplete
+}: {
+  workspacePath: string;
+  worktreeKey: string;
+  hasPlayed: boolean;
+  onComplete: () => void;
+}) {
+  const [visibleMessages, setVisibleMessages] = useState<typeof geminiConversation>(
+    hasPlayed ? geminiConversation : []
+  );
+  const [isComplete, setIsComplete] = useState(hasPlayed);
 
   useEffect(() => {
+    if (hasPlayed) {
+      setVisibleMessages(geminiConversation);
+      setIsComplete(true);
+      return;
+    }
+
+    setVisibleMessages([]);
+    setIsComplete(false);
+
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     geminiConversation.forEach((msg, index) => {
@@ -508,13 +575,14 @@ function GeminiSessionChat({ workspacePath }: { workspacePath: string }) {
         setVisibleMessages(prev => [...prev, msg]);
         if (index === geminiConversation.length - 1) {
           setIsComplete(true);
+          onComplete();
         }
       }, msg.delay);
       timers.push(timer);
     });
 
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [worktreeKey, hasPlayed, onComplete]);
 
   return (
     <motion.div
@@ -668,10 +736,25 @@ export function EnsoAIDemoPreview() {
   const [activeWorktree, setActiveWorktree] = useState('main');
   const [activeSession, setActiveSession] = useState('claude');
   const [activeTab, setActiveTab] = useState('agent');
+  const [playedAnimations, setPlayedAnimations] = useState<Set<string>>(new Set());
 
   const worktrees = worktreesData[selectedRepo] || [];
   const currentSession = sessions.find(s => s.id === activeSession);
   const workspacePath = `~/ensoai/workspaces/${selectedRepo}/${activeWorktree}`;
+
+  // Unique key for each worktree+session combination
+  const getAnimationKey = useCallback(
+    (session: string) => `${selectedRepo}:${activeWorktree}:${session}`,
+    [selectedRepo, activeWorktree]
+  );
+
+  const markAnimationPlayed = useCallback(
+    (session: string) => {
+      const key = `${selectedRepo}:${activeWorktree}:${session}`;
+      setPlayedAnimations(prev => new Set(prev).add(key));
+    },
+    [selectedRepo, activeWorktree]
+  );
 
   return (
     <motion.div
@@ -877,16 +960,31 @@ export function EnsoAIDemoPreview() {
               {activeTab === 'agent' && (
                 <div className="h-full p-4 font-mono text-sm overflow-auto">
                   {activeSession === 'claude' && (
-                <ClaudeSessionChat workspacePath={workspacePath} />
-              )}
+                    <ClaudeSessionChat
+                      workspacePath={workspacePath}
+                      worktreeKey={getAnimationKey('claude')}
+                      hasPlayed={playedAnimations.has(getAnimationKey('claude'))}
+                      onComplete={() => markAnimationPlayed('claude')}
+                    />
+                  )}
 
-              {activeSession === 'codex' && (
-                <CodexSessionChat workspacePath={workspacePath} />
-              )}
+                  {activeSession === 'codex' && (
+                    <CodexSessionChat
+                      workspacePath={workspacePath}
+                      worktreeKey={getAnimationKey('codex')}
+                      hasPlayed={playedAnimations.has(getAnimationKey('codex'))}
+                      onComplete={() => markAnimationPlayed('codex')}
+                    />
+                  )}
 
-              {activeSession === 'gemini' && (
-                <GeminiSessionChat workspacePath={workspacePath} />
-              )}
+                  {activeSession === 'gemini' && (
+                    <GeminiSessionChat
+                      workspacePath={workspacePath}
+                      worktreeKey={getAnimationKey('gemini')}
+                      hasPlayed={playedAnimations.has(getAnimationKey('gemini'))}
+                      onComplete={() => markAnimationPlayed('gemini')}
+                    />
+                  )}
                 </div>
               )}
 
@@ -956,7 +1054,12 @@ export function EnsoAIDemoPreview() {
                   transition={{ duration: 0.3 }}
                   className="h-full"
                 >
-                  <WebContainerTerminal workspacePath={workspacePath} />
+                  <WebContainerTerminal
+                    workspacePath={workspacePath}
+                    worktreeKey={getAnimationKey('terminal')}
+                    hasPlayed={playedAnimations.has(getAnimationKey('terminal'))}
+                    onComplete={() => markAnimationPlayed('terminal')}
+                  />
                 </motion.div>
               )}
 

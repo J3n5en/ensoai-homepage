@@ -17,23 +17,43 @@ const terminalHistory = [
 
 interface WebContainerTerminalProps {
   workspacePath?: string;
+  worktreeKey: string;
+  hasPlayed: boolean;
+  onComplete: () => void;
 }
 
-export function WebContainerTerminal({ workspacePath }: WebContainerTerminalProps) {
-  const [visibleLines, setVisibleLines] = useState<typeof terminalHistory>([]);
+export function WebContainerTerminal({
+  workspacePath,
+  worktreeKey,
+  hasPlayed,
+  onComplete
+}: WebContainerTerminalProps) {
+  const [visibleLines, setVisibleLines] = useState<typeof terminalHistory>(
+    hasPlayed ? terminalHistory : []
+  );
 
   useEffect(() => {
+    if (hasPlayed) {
+      setVisibleLines(terminalHistory);
+      return;
+    }
+
+    setVisibleLines([]);
+
     const timers: ReturnType<typeof setTimeout>[] = [];
 
-    terminalHistory.forEach((line) => {
+    terminalHistory.forEach((line, index) => {
       const timer = setTimeout(() => {
         setVisibleLines(prev => [...prev, line]);
+        if (index === terminalHistory.length - 1) {
+          onComplete();
+        }
       }, line.delay);
       timers.push(timer);
     });
 
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [worktreeKey, hasPlayed, onComplete]);
 
   return (
     <div className="h-full w-full flex flex-col bg-[#1a1a2e] text-gray-300">
