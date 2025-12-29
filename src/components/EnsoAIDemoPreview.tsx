@@ -19,7 +19,6 @@ import {
   ChevronDown,
   File,
   FolderOpen,
-  Minus,
   RotateCcw,
 } from 'lucide-react';
 import { WebContainerTerminal } from './WebContainerTerminal';
@@ -248,6 +247,323 @@ const gitChanges = {
   untracked: [
     { name: 'src/utils/helpers.ts' },
   ],
+};
+
+// Mock file contents for code editor
+const fileContents: Record<string, { lines: Array<{ num: number; content: React.ReactNode }> }> = {
+  'src/components/Sidebar.tsx': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">useState</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'react'</span>;</> },
+      { num: 2, content: <><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">motion</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'framer-motion'</span>;</> },
+      { num: 3, content: '' },
+      { num: 4, content: <><span className="text-ayu-purple">export function</span> <span className="text-ayu-func">Sidebar</span>() {'{'}</> },
+      { num: 5, content: <>  <span className="text-ayu-purple">const</span> [<span className="text-ayu-fg">isOpen</span>, <span className="text-ayu-fg">setIsOpen</span>] = <span className="text-ayu-func">useState</span>(<span className="text-ayu-constant">true</span>);</> },
+      { num: 6, content: '' },
+      { num: 7, content: <>  <span className="text-ayu-purple">return</span> (</> },
+      { num: 8, content: <>    {'<'}<span className="text-ayu-tag">motion.div</span></> },
+      { num: 9, content: <>      <span className="text-ayu-entity">className</span>=<span className="text-ayu-string">"sidebar"</span></> },
+      { num: 10, content: <>      <span className="text-ayu-entity">animate</span>={'{{ '}opacity: isOpen ? 1 : 0 {'}}'}</> },
+      { num: 11, content: <>    {'>'}</> },
+      { num: 12, content: <>      <span className="text-ayu-comment">{'// TODO: Add sidebar content'}</span></> },
+      { num: 13, content: <>    {'</'}<span className="text-ayu-tag">motion.div</span>{'>'}</> },
+      { num: 14, content: <>  );</> },
+      { num: 15, content: <>{'}'}</> },
+    ],
+  },
+  'src/components/Button.tsx': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">clsx</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'clsx'</span>;</> },
+      { num: 2, content: '' },
+      { num: 3, content: <><span className="text-ayu-purple">interface</span> <span className="text-ayu-type">ButtonProps</span> {'{'}</> },
+      { num: 4, content: <>  <span className="text-ayu-fg">children</span>: <span className="text-ayu-type">React.ReactNode</span>;</> },
+      { num: 5, content: <>  <span className="text-ayu-fg">variant</span>?: <span className="text-ayu-string">'primary'</span> | <span className="text-ayu-string">'secondary'</span>;</> },
+      { num: 6, content: <>{'}'}</> },
+      { num: 7, content: '' },
+      { num: 8, content: <><span className="text-ayu-purple">export function</span> <span className="text-ayu-func">Button</span>({'{'} children, variant = <span className="text-ayu-string">'primary'</span> {'}'}) {'{'}</> },
+      { num: 9, content: <>  <span className="text-ayu-purple">return</span> (</> },
+      { num: 10, content: <>    {'<'}<span className="text-ayu-tag">button</span> <span className="text-ayu-entity">className</span>={'{'}clsx(</> },
+      { num: 11, content: <>      <span className="text-ayu-string">'px-4 py-2 rounded-lg font-medium'</span>,</> },
+      { num: 12, content: <>      variant === <span className="text-ayu-string">'primary'</span> && <span className="text-ayu-string">'bg-blue-500 text-white'</span></> },
+      { num: 13, content: <>    ){'}'}{'>'}{'{'}children{'}'} {'</'}<span className="text-ayu-tag">button</span>{'>'}</> },
+      { num: 14, content: <>  );</> },
+      { num: 15, content: <>{'}'}</> },
+    ],
+  },
+  'src/App.tsx': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">Sidebar</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'./components/Sidebar'</span>;</> },
+      { num: 2, content: <><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">Header</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'./components/Header'</span>;</> },
+      { num: 3, content: '' },
+      { num: 4, content: <><span className="text-ayu-purple">export default function</span> <span className="text-ayu-func">App</span>() {'{'}</> },
+      { num: 5, content: <>  <span className="text-ayu-purple">return</span> (</> },
+      { num: 6, content: <>    {'<'}<span className="text-ayu-tag">div</span> <span className="text-ayu-entity">className</span>=<span className="text-ayu-string">"app"</span>{'>'}</> },
+      { num: 7, content: <>      {'<'}<span className="text-ayu-tag">Header</span> /{'>'}</> },
+      { num: 8, content: <>      {'<'}<span className="text-ayu-tag">Sidebar</span> /{'>'}</> },
+      { num: 9, content: <>      {'<'}<span className="text-ayu-tag">main</span>{'>'}<span className="text-ayu-comment">{'{ /* Content */ }'}</span>{'</'}<span className="text-ayu-tag">main</span>{'>'}</> },
+      { num: 10, content: <>    {'</'}<span className="text-ayu-tag">div</span>{'>'}</> },
+      { num: 11, content: <>  );</> },
+      { num: 12, content: <>{'}'}</> },
+    ],
+  },
+  'src/hooks/useAuth.ts': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">useState</span>, <span className="text-ayu-fg">useEffect</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'react'</span>;</> },
+      { num: 2, content: '' },
+      { num: 3, content: <><span className="text-ayu-purple">export function</span> <span className="text-ayu-func">useAuth</span>() {'{'}</> },
+      { num: 4, content: <>  <span className="text-ayu-purple">const</span> [<span className="text-ayu-fg">user</span>, <span className="text-ayu-fg">setUser</span>] = <span className="text-ayu-func">useState</span>(<span className="text-ayu-constant">null</span>);</> },
+      { num: 5, content: <>  <span className="text-ayu-purple">const</span> [<span className="text-ayu-fg">loading</span>, <span className="text-ayu-fg">setLoading</span>] = <span className="text-ayu-func">useState</span>(<span className="text-ayu-constant">true</span>);</> },
+      { num: 6, content: '' },
+      { num: 7, content: <>  <span className="text-ayu-func">useEffect</span>(() ={'>'} {'{'}</> },
+      { num: 8, content: <>    <span className="text-ayu-comment">// Check auth status</span></> },
+      { num: 9, content: <>    <span className="text-ayu-func">checkAuth</span>().<span className="text-ayu-func">then</span>(<span className="text-ayu-fg">setUser</span>);</> },
+      { num: 10, content: <>  {'}'}, []);</> },
+      { num: 11, content: '' },
+      { num: 12, content: <>  <span className="text-ayu-purple">return</span> {'{'} user, loading {'}'};</> },
+      { num: 13, content: <>{'}'}</> },
+    ],
+  },
+  'src/components/Header.tsx': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">useState</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'react'</span>;</> },
+      { num: 2, content: <><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">Menu</span>, <span className="text-ayu-fg">X</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'lucide-react'</span>;</> },
+      { num: 3, content: '' },
+      { num: 4, content: <><span className="text-ayu-purple">export function</span> <span className="text-ayu-func">Header</span>() {'{'}</> },
+      { num: 5, content: <>  <span className="text-ayu-purple">const</span> [<span className="text-ayu-fg">menuOpen</span>, <span className="text-ayu-fg">setMenuOpen</span>] = <span className="text-ayu-func">useState</span>(<span className="text-ayu-constant">false</span>);</> },
+      { num: 6, content: '' },
+      { num: 7, content: <>  <span className="text-ayu-purple">return</span> (</> },
+      { num: 8, content: <>    {'<'}<span className="text-ayu-tag">header</span> <span className="text-ayu-entity">className</span>=<span className="text-ayu-string">"flex justify-between p-4"</span>{'>'}</> },
+      { num: 9, content: <>      {'<'}<span className="text-ayu-tag">h1</span>{'>'}<span className="text-ayu-fg">My App</span>{'</'}<span className="text-ayu-tag">h1</span>{'>'}</> },
+      { num: 10, content: <>      {'<'}<span className="text-ayu-tag">button</span> <span className="text-ayu-entity">onClick</span>={'{'}() ={'>'} <span className="text-ayu-func">setMenuOpen</span>(!menuOpen){'}'}</> },
+      { num: 11, content: <>        {'{'}menuOpen ? {'<'}<span className="text-ayu-tag">X</span> /{'>'} : {'<'}<span className="text-ayu-tag">Menu</span> /{'>'}{'}'}</> },
+      { num: 12, content: <>      {'</'}<span className="text-ayu-tag">button</span>{'>'}</> },
+      { num: 13, content: <>    {'</'}<span className="text-ayu-tag">header</span>{'>'}</> },
+      { num: 14, content: <>  );</> },
+      { num: 15, content: <>{'}'}</> },
+    ],
+  },
+  'src/index.tsx': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-purple">import</span> <span className="text-ayu-fg">React</span> <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'react'</span>;</> },
+      { num: 2, content: <><span className="text-ayu-purple">import</span> <span className="text-ayu-fg">ReactDOM</span> <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'react-dom/client'</span>;</> },
+      { num: 3, content: <><span className="text-ayu-purple">import</span> <span className="text-ayu-fg">App</span> <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'./App'</span>;</> },
+      { num: 4, content: <><span className="text-ayu-purple">import</span> <span className="text-ayu-string">'./index.css'</span>;</> },
+      { num: 5, content: '' },
+      { num: 6, content: <><span className="text-ayu-fg">ReactDOM</span>.<span className="text-ayu-func">createRoot</span>(</> },
+      { num: 7, content: <>  <span className="text-ayu-fg">document</span>.<span className="text-ayu-func">getElementById</span>(<span className="text-ayu-string">'root'</span>)!</> },
+      { num: 8, content: <>).<span className="text-ayu-func">render</span>(</> },
+      { num: 9, content: <>  {'<'}<span className="text-ayu-tag">React.StrictMode</span>{'>'}</> },
+      { num: 10, content: <>    {'<'}<span className="text-ayu-tag">App</span> /{'>'}</> },
+      { num: 11, content: <>  {'</'}<span className="text-ayu-tag">React.StrictMode</span>{'>'}</> },
+      { num: 12, content: <>);</> },
+    ],
+  },
+  'package.json': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-fg">{'{'}</span></> },
+      { num: 2, content: <>  <span className="text-ayu-string">"name"</span>: <span className="text-ayu-string">"my-react-app"</span>,</> },
+      { num: 3, content: <>  <span className="text-ayu-string">"version"</span>: <span className="text-ayu-string">"1.0.0"</span>,</> },
+      { num: 4, content: <>  <span className="text-ayu-string">"type"</span>: <span className="text-ayu-string">"module"</span>,</> },
+      { num: 5, content: <>  <span className="text-ayu-string">"scripts"</span>: {'{'}</> },
+      { num: 6, content: <>    <span className="text-ayu-string">"dev"</span>: <span className="text-ayu-string">"vite"</span>,</> },
+      { num: 7, content: <>    <span className="text-ayu-string">"build"</span>: <span className="text-ayu-string">"tsc && vite build"</span>,</> },
+      { num: 8, content: <>    <span className="text-ayu-string">"preview"</span>: <span className="text-ayu-string">"vite preview"</span></> },
+      { num: 9, content: <>  {'}'},</> },
+      { num: 10, content: <>  <span className="text-ayu-string">"dependencies"</span>: {'{'}</> },
+      { num: 11, content: <>    <span className="text-ayu-string">"react"</span>: <span className="text-ayu-string">"^18.2.0"</span>,</> },
+      { num: 12, content: <>    <span className="text-ayu-string">"react-dom"</span>: <span className="text-ayu-string">"^18.2.0"</span></> },
+      { num: 13, content: <>  {'}'}</> },
+      { num: 14, content: <><span className="text-ayu-fg">{'}'}</span></> },
+    ],
+  },
+  'tsconfig.json': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-fg">{'{'}</span></> },
+      { num: 2, content: <>  <span className="text-ayu-string">"compilerOptions"</span>: {'{'}</> },
+      { num: 3, content: <>    <span className="text-ayu-string">"target"</span>: <span className="text-ayu-string">"ES2020"</span>,</> },
+      { num: 4, content: <>    <span className="text-ayu-string">"useDefineForClassFields"</span>: <span className="text-ayu-constant">true</span>,</> },
+      { num: 5, content: <>    <span className="text-ayu-string">"lib"</span>: [<span className="text-ayu-string">"ES2020"</span>, <span className="text-ayu-string">"DOM"</span>],</> },
+      { num: 6, content: <>    <span className="text-ayu-string">"module"</span>: <span className="text-ayu-string">"ESNext"</span>,</> },
+      { num: 7, content: <>    <span className="text-ayu-string">"strict"</span>: <span className="text-ayu-constant">true</span>,</> },
+      { num: 8, content: <>    <span className="text-ayu-string">"jsx"</span>: <span className="text-ayu-string">"react-jsx"</span>,</> },
+      { num: 9, content: <>    <span className="text-ayu-string">"noEmit"</span>: <span className="text-ayu-constant">true</span></> },
+      { num: 10, content: <>  {'}'},</> },
+      { num: 11, content: <>  <span className="text-ayu-string">"include"</span>: [<span className="text-ayu-string">"src"</span>]</> },
+      { num: 12, content: <><span className="text-ayu-fg">{'}'}</span></> },
+    ],
+  },
+  'README.md': {
+    lines: [
+      { num: 1, content: <><span className="text-ayu-entity"># My React App</span></> },
+      { num: 2, content: '' },
+      { num: 3, content: <><span className="text-ayu-fg">A modern React application built with Vite and TypeScript.</span></> },
+      { num: 4, content: '' },
+      { num: 5, content: <><span className="text-ayu-entity">## Getting Started</span></> },
+      { num: 6, content: '' },
+      { num: 7, content: <><span className="text-ayu-comment">```bash</span></> },
+      { num: 8, content: <><span className="text-ayu-fg">npm install</span></> },
+      { num: 9, content: <><span className="text-ayu-fg">npm run dev</span></> },
+      { num: 10, content: <><span className="text-ayu-comment">```</span></> },
+      { num: 11, content: '' },
+      { num: 12, content: <><span className="text-ayu-entity">## Features</span></> },
+      { num: 13, content: '' },
+      { num: 14, content: <><span className="text-ayu-fg">- React 18 with hooks</span></> },
+      { num: 15, content: <><span className="text-ayu-fg">- TypeScript support</span></> },
+      { num: 16, content: <><span className="text-ayu-fg">- Vite for fast development</span></> },
+    ],
+  },
+};
+
+// Mock diff contents for source control
+const diffContents: Record<string, { additions: number; deletions: number; hunks: React.ReactNode }> = {
+  'src/components/Button.tsx': {
+    additions: 3,
+    deletions: 1,
+    hunks: (
+      <>
+        <div className="text-ayu-fg/40 mb-2">@@ -12,7 +12,9 @@ export function Button({'{'} children, variant = 'primary' {'}'}) {'{'}</div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">12</span>    return (</div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">13</span>      {'<'}button</div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">14</span>        className={'{'}clsx(</div>
+        <div className="bg-ayu-red/10 text-ayu-red border-l-2 border-ayu-red pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">15</span>-         'px-4 py-2 rounded font-medium',
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">15</span>+         'px-4 py-2 rounded-lg font-medium',
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">16</span>+         'transition-all duration-200',
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">17</span>+         'hover:scale-105 active:scale-95',
+        </div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">18</span>          variant === 'primary' && 'bg-blue-500 text-white',</div>
+      </>
+    ),
+  },
+  'src/hooks/useAuth.ts': {
+    additions: 13,
+    deletions: 0,
+    hunks: (
+      <>
+        <div className="text-ayu-fg/40 mb-2">@@ -0,0 +1,13 @@ New file</div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">1</span>+ import {'{'} useState, useEffect {'}'} from 'react';
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">2</span>+
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">3</span>+ export function useAuth() {'{'}
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">4</span>+   const [user, setUser] = useState(null);
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">5</span>+   const [loading, setLoading] = useState(true);
+        </div>
+      </>
+    ),
+  },
+  'src/components/Sidebar.tsx': {
+    additions: 2,
+    deletions: 1,
+    hunks: (
+      <>
+        <div className="text-ayu-fg/40 mb-2">@@ -8,7 +8,8 @@ export function Sidebar() {'{'}</div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">8</span>    {'<'}motion.div</div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">9</span>      className="sidebar"</div>
+        <div className="bg-ayu-red/10 text-ayu-red border-l-2 border-ayu-red pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">10</span>-      animate={'{{ '}opacity: isOpen ? 1 : 0 {'}}'}
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">10</span>+      initial={'{{ '}x: -100 {'}}'}
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">11</span>+      animate={'{{ '}x: isOpen ? 0 : -100 {'}}'}
+        </div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">12</span>    {'>'}</div>
+      </>
+    ),
+  },
+  'src/App.tsx': {
+    additions: 1,
+    deletions: 0,
+    hunks: (
+      <>
+        <div className="text-ayu-fg/40 mb-2">@@ -6,6 +6,7 @@ export default function App() {'{'}</div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">6</span>    {'<'}div className="app"{'>'}</div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">7</span>      {'<'}Header /{'>'}</div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">8</span>      {'<'}Sidebar /{'>'}</div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">9</span>+      {'<'}Footer /{'>'} {'{'}<span className="text-ayu-comment">/* Added footer */</span>{'}'}
+        </div>
+        <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">10</span>      {'<'}main{'>'}{'{ /* Content */ }'}{'<'}/main{'>'}</div>
+      </>
+    ),
+  },
+  'src/utils/helpers.ts': {
+    additions: 18,
+    deletions: 0,
+    hunks: (
+      <>
+        <div className="text-ayu-fg/40 mb-2">@@ -0,0 +1,18 @@ New file (untracked)</div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">1</span>+ export function formatDate(date: Date): string {'{'}
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">2</span>+   return date.toLocaleDateString('en-US', {'{'}
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">3</span>+     year: 'numeric',
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">4</span>+     month: 'short',
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">5</span>+     day: 'numeric',
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">6</span>+   {'}'});
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">7</span>+ {'}'}
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">8</span>+
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">9</span>+ export function debounce{'<'}T extends (...args: unknown[]) ={'>'} void{'>'}(
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">10</span>+   fn: T,
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">11</span>+   delay: number
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">12</span>+ ): (...args: Parameters{'<'}T{'>'}) ={'>'} void {'{'}
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">13</span>+   let timeoutId: ReturnType{'<'}typeof setTimeout{'>'};
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">14</span>+   return (...args) ={'>'} {'{'}
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">15</span>+     clearTimeout(timeoutId);
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">16</span>+     timeoutId = setTimeout(() ={'>'} fn(...args), delay);
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">17</span>+   {'}'};
+        </div>
+        <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
+          <span className="text-ayu-fg/30 mr-3">18</span>+ {'}'}
+        </div>
+      </>
+    ),
+  },
 };
 
 // Ghostty mascot as simple SVG
@@ -682,18 +998,31 @@ function GeminiSessionChat({
 interface FileTreeItemProps {
   item: { name: string; type: string; expanded?: boolean; children?: FileTreeItemProps['item'][]; modified?: boolean; lang?: string };
   depth: number;
+  path?: string;
+  selectedFile?: string;
+  onSelectFile?: (path: string) => void;
 }
 
-const FileTreeItem = ({ item, depth }: FileTreeItemProps) => {
+const FileTreeItem = ({ item, depth, path = '', selectedFile, onSelectFile }: FileTreeItemProps) => {
   const [expanded, setExpanded] = useState(item.expanded ?? false);
   const isFolder = item.type === 'folder';
+  const fullPath = path ? `${path}/${item.name}` : item.name;
+  const isSelected = selectedFile === fullPath;
+
+  const handleClick = () => {
+    if (isFolder) {
+      setExpanded(!expanded);
+    } else if (onSelectFile) {
+      onSelectFile(fullPath);
+    }
+  };
 
   return (
     <div>
       <div
-        className={`flex items-center gap-1 py-1 px-2 hover:bg-ayu-line/30 cursor-pointer text-xs`}
+        className={`flex items-center gap-1 py-1 px-2 hover:bg-ayu-line/30 cursor-pointer text-xs ${isSelected ? 'bg-ayu-accent/10' : ''}`}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
-        onClick={() => isFolder && setExpanded(!expanded)}
+        onClick={handleClick}
       >
         {isFolder ? (
           <>
@@ -711,10 +1040,10 @@ const FileTreeItem = ({ item, depth }: FileTreeItemProps) => {
         ) : (
           <>
             <span className="w-3" />
-            <File className="w-3.5 h-3.5 text-ayu-fg/50" />
+            <File className={`w-3.5 h-3.5 ${isSelected ? 'text-ayu-accent' : 'text-ayu-fg/50'}`} />
           </>
         )}
-        <span className={`ml-1 ${item.modified ? 'text-ayu-yellow' : 'text-ayu-fg/80'}`}>
+        <span className={`ml-1 ${item.modified ? 'text-ayu-yellow' : isSelected ? 'text-ayu-accent' : 'text-ayu-fg/80'}`}>
           {item.name}
         </span>
         {item.modified && <CircleDot className="w-2 h-2 text-ayu-yellow ml-auto" />}
@@ -722,7 +1051,14 @@ const FileTreeItem = ({ item, depth }: FileTreeItemProps) => {
       {isFolder && expanded && item.children && (
         <div>
           {item.children.map((child, i) => (
-            <FileTreeItem key={i} item={child} depth={depth + 1} />
+            <FileTreeItem
+              key={i}
+              item={child}
+              depth={depth + 1}
+              path={fullPath}
+              selectedFile={selectedFile}
+              onSelectFile={onSelectFile}
+            />
           ))}
         </div>
       )}
@@ -737,6 +1073,30 @@ export function EnsoAIDemoPreview() {
   const [activeSession, setActiveSession] = useState('claude');
   const [activeTab, setActiveTab] = useState('agent');
   const [playedAnimations, setPlayedAnimations] = useState<Set<string>>(new Set());
+  const [selectedFile, setSelectedFile] = useState('src/components/Sidebar.tsx');
+  const [openTabs, setOpenTabs] = useState<string[]>(['src/components/Sidebar.tsx']);
+  const [selectedGitFile, setSelectedGitFile] = useState('src/components/Button.tsx');
+
+  // Handle opening a file - add to tabs if not already open
+  const handleOpenFile = useCallback((filePath: string) => {
+    setSelectedFile(filePath);
+    setOpenTabs(prev => prev.includes(filePath) ? prev : [...prev, filePath]);
+  }, []);
+
+  // Handle closing a tab
+  const handleCloseTab = useCallback((filePath: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpenTabs(prev => {
+      const newTabs = prev.filter(t => t !== filePath);
+      // If closing the selected tab, select another tab
+      if (filePath === selectedFile && newTabs.length > 0) {
+        const closedIndex = prev.indexOf(filePath);
+        const newSelectedIndex = Math.min(closedIndex, newTabs.length - 1);
+        setSelectedFile(newTabs[newSelectedIndex]);
+      }
+      return newTabs;
+    });
+  }, [selectedFile]);
 
   const worktrees = worktreesData[selectedRepo] || [];
   const currentSession = sessions.find(s => s.id === activeSession);
@@ -998,17 +1358,26 @@ export function EnsoAIDemoPreview() {
                   className="h-full flex flex-col"
                 >
                   {/* File tabs */}
-                  <div className="flex items-center gap-1 px-2 py-1 border-b border-ayu-line bg-ayu-panel/50">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-ayu-bg rounded border border-ayu-line text-xs">
-                      <File className="w-3 h-3 text-ayu-accent" />
-                      <span className="text-ayu-fg">Sidebar.tsx</span>
-                      <CircleDot className="w-2 h-2 text-ayu-yellow" />
-                      <X className="w-3 h-3 text-ayu-fg/40 hover:text-ayu-fg cursor-pointer" />
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 text-xs text-ayu-fg/50 hover:bg-ayu-line/30 rounded cursor-pointer">
-                      <File className="w-3 h-3" />
-                      <span>App.tsx</span>
-                    </div>
+                  <div className="flex items-center gap-1 px-2 py-1 border-b border-ayu-line bg-ayu-panel/50 overflow-x-auto">
+                    {openTabs.map((tab) => (
+                      <div
+                        key={tab}
+                        onClick={() => setSelectedFile(tab)}
+                        className={`flex items-center gap-2 px-3 py-1 rounded border text-xs cursor-pointer shrink-0 ${
+                          tab === selectedFile
+                            ? 'bg-ayu-bg border-ayu-line'
+                            : 'bg-transparent border-transparent hover:bg-ayu-line/30'
+                        }`}
+                      >
+                        <File className={`w-3 h-3 ${tab === selectedFile ? 'text-ayu-accent' : 'text-ayu-fg/50'}`} />
+                        <span className={tab === selectedFile ? 'text-ayu-fg' : 'text-ayu-fg/70'}>{tab.split('/').pop()}</span>
+                        {tab === 'src/components/Sidebar.tsx' && <CircleDot className="w-2 h-2 text-ayu-yellow" />}
+                        <X
+                          className="w-3 h-3 text-ayu-fg/40 hover:text-ayu-fg"
+                          onClick={(e) => handleCloseTab(tab, e)}
+                        />
+                      </div>
+                    ))}
                   </div>
                   {/* File tree and editor */}
                   <div className="flex-1 flex overflow-hidden">
@@ -1018,27 +1387,26 @@ export function EnsoAIDemoPreview() {
                         {selectedRepo}
                       </div>
                       {fileTreeData.map((item, i) => (
-                        <FileTreeItem key={i} item={item} depth={0} />
+                        <FileTreeItem
+                          key={i}
+                          item={item}
+                          depth={0}
+                          selectedFile={selectedFile}
+                          onSelectFile={handleOpenFile}
+                        />
                       ))}
                     </div>
                     {/* Code editor */}
                     <div className="flex-1 overflow-auto p-4 font-mono text-xs">
                       <div className="text-ayu-fg/40 select-none">
-                        <div><span className="text-ayu-fg/30 mr-4">1</span><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">useState</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'react'</span>;</div>
-                        <div><span className="text-ayu-fg/30 mr-4">2</span><span className="text-ayu-purple">import</span> {'{'} <span className="text-ayu-fg">motion</span> {'}'} <span className="text-ayu-purple">from</span> <span className="text-ayu-string">'framer-motion'</span>;</div>
-                        <div><span className="text-ayu-fg/30 mr-4">3</span></div>
-                        <div><span className="text-ayu-fg/30 mr-4">4</span><span className="text-ayu-purple">export function</span> <span className="text-ayu-func">Sidebar</span>() {'{'}</div>
-                        <div><span className="text-ayu-fg/30 mr-4">5</span>  <span className="text-ayu-purple">const</span> [<span className="text-ayu-fg">isOpen</span>, <span className="text-ayu-fg">setIsOpen</span>] = <span className="text-ayu-func">useState</span>(<span className="text-ayu-constant">true</span>);</div>
-                        <div><span className="text-ayu-fg/30 mr-4">6</span></div>
-                        <div><span className="text-ayu-fg/30 mr-4">7</span>  <span className="text-ayu-purple">return</span> (</div>
-                        <div><span className="text-ayu-fg/30 mr-4">8</span>    {'<'}<span className="text-ayu-tag">motion.div</span></div>
-                        <div><span className="text-ayu-fg/30 mr-4">9</span>      <span className="text-ayu-entity">className</span>=<span className="text-ayu-string">"sidebar"</span></div>
-                        <div><span className="text-ayu-fg/30">10</span>      <span className="text-ayu-entity">animate</span>={'{{ '}opacity: isOpen ? 1 : 0 {'}}'}</div>
-                        <div><span className="text-ayu-fg/30">11</span>    {'>'}</div>
-                        <div><span className="text-ayu-fg/30">12</span>      <span className="text-ayu-comment">{'// TODO: Add sidebar content'}</span></div>
-                        <div><span className="text-ayu-fg/30">13</span>    {'</'}<span className="text-ayu-tag">motion.div</span>{'>'}</div>
-                        <div><span className="text-ayu-fg/30">14</span>  );</div>
-                        <div><span className="text-ayu-fg/30">15</span>{'}'}</div>
+                        {fileContents[selectedFile]?.lines.map((line) => (
+                          <div key={line.num}>
+                            <span className="text-ayu-fg/30 mr-4 inline-block w-4 text-right">{line.num}</span>
+                            {line.content}
+                          </div>
+                        )) || (
+                          <div className="text-ayu-fg/50 italic">Select a file to view its contents</div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1112,14 +1480,17 @@ export function EnsoAIDemoPreview() {
                           <span className="ml-auto text-ayu-fg/40">{gitChanges.staged.length}</span>
                           <span title="AI Review"><Sparkles className="w-3 h-3 text-ayu-accent opacity-0 group-hover:opacity-100 cursor-pointer" /></span>
                         </div>
-                        {gitChanges.staged.map((file, i) => (
-                          <div key={i} className={`flex items-center gap-2 px-5 py-1 text-xs hover:bg-ayu-line/30 cursor-pointer ${i === 0 ? 'bg-ayu-accent/10' : ''}`}>
+                        {gitChanges.staged.map((file) => (
+                          <div
+                            key={file.name}
+                            onClick={() => setSelectedGitFile(file.name)}
+                            className={`flex items-center gap-2 px-5 py-1 text-xs hover:bg-ayu-line/30 cursor-pointer ${selectedGitFile === file.name ? 'bg-ayu-accent/10' : ''}`}
+                          >
                             <span className={`w-4 text-center font-mono ${file.status === 'M' ? 'text-ayu-yellow' : 'text-ayu-green'}`}>
                               {file.status}
                             </span>
-                            <File className="w-3 h-3 text-ayu-fg/50" />
-                            <span className="text-ayu-fg/80 truncate flex-1">{file.name.split('/').pop()}</span>
-                            <Minus className="w-3 h-3 text-ayu-fg/40 hover:text-ayu-red opacity-0 group-hover:opacity-100" />
+                            <File className={`w-3 h-3 ${selectedGitFile === file.name ? 'text-ayu-accent' : 'text-ayu-fg/50'}`} />
+                            <span className={`truncate flex-1 ${selectedGitFile === file.name ? 'text-ayu-accent' : 'text-ayu-fg/80'}`}>{file.name.split('/').pop()}</span>
                           </div>
                         ))}
                       </div>
@@ -1131,12 +1502,15 @@ export function EnsoAIDemoPreview() {
                           <span>Changes</span>
                           <span className="ml-auto text-ayu-fg/40">{gitChanges.unstaged.length}</span>
                         </div>
-                        {gitChanges.unstaged.map((file, i) => (
-                          <div key={i} className="flex items-center gap-2 px-5 py-1 text-xs hover:bg-ayu-line/30 cursor-pointer group">
+                        {gitChanges.unstaged.map((file) => (
+                          <div
+                            key={file.name}
+                            onClick={() => setSelectedGitFile(file.name)}
+                            className={`flex items-center gap-2 px-5 py-1 text-xs hover:bg-ayu-line/30 cursor-pointer ${selectedGitFile === file.name ? 'bg-ayu-accent/10' : ''}`}
+                          >
                             <span className="w-4 text-center text-ayu-yellow font-mono">{file.status}</span>
-                            <File className="w-3 h-3 text-ayu-fg/50" />
-                            <span className="text-ayu-fg/80 truncate flex-1">{file.name.split('/').pop()}</span>
-                            <Plus className="w-3 h-3 text-ayu-fg/40 hover:text-ayu-green opacity-0 group-hover:opacity-100" />
+                            <File className={`w-3 h-3 ${selectedGitFile === file.name ? 'text-ayu-accent' : 'text-ayu-fg/50'}`} />
+                            <span className={`truncate flex-1 ${selectedGitFile === file.name ? 'text-ayu-accent' : 'text-ayu-fg/80'}`}>{file.name.split('/').pop()}</span>
                           </div>
                         ))}
                       </div>
@@ -1148,12 +1522,15 @@ export function EnsoAIDemoPreview() {
                           <span>Untracked</span>
                           <span className="ml-auto text-ayu-fg/40">{gitChanges.untracked.length}</span>
                         </div>
-                        {gitChanges.untracked.map((file, i) => (
-                          <div key={i} className="flex items-center gap-2 px-5 py-1 text-xs hover:bg-ayu-line/30 cursor-pointer group">
+                        {gitChanges.untracked.map((file) => (
+                          <div
+                            key={file.name}
+                            onClick={() => setSelectedGitFile(file.name)}
+                            className={`flex items-center gap-2 px-5 py-1 text-xs hover:bg-ayu-line/30 cursor-pointer ${selectedGitFile === file.name ? 'bg-ayu-accent/10' : ''}`}
+                          >
                             <span className="w-4 text-center text-ayu-green font-mono">U</span>
-                            <File className="w-3 h-3 text-ayu-fg/50" />
-                            <span className="text-ayu-fg/80 truncate flex-1">{file.name.split('/').pop()}</span>
-                            <Plus className="w-3 h-3 text-ayu-fg/40 hover:text-ayu-green opacity-0 group-hover:opacity-100" />
+                            <File className={`w-3 h-3 ${selectedGitFile === file.name ? 'text-ayu-accent' : 'text-ayu-fg/50'}`} />
+                            <span className={`truncate flex-1 ${selectedGitFile === file.name ? 'text-ayu-accent' : 'text-ayu-fg/80'}`}>{file.name.split('/').pop()}</span>
                           </div>
                         ))}
                       </div>
@@ -1166,8 +1543,10 @@ export function EnsoAIDemoPreview() {
                     <div className="flex items-center justify-between px-4 py-2 border-b border-ayu-line bg-ayu-panel/50">
                       <div className="flex items-center gap-2 text-xs">
                         <File className="w-3.5 h-3.5 text-ayu-fg/50" />
-                        <span className="text-ayu-fg font-medium">src/components/Button.tsx</span>
-                        <span className="text-ayu-yellow">M</span>
+                        <span className="text-ayu-fg font-medium">{selectedGitFile}</span>
+                        <span className={gitChanges.untracked.some(f => f.name === selectedGitFile) ? 'text-ayu-green' : 'text-ayu-yellow'}>
+                          {gitChanges.untracked.some(f => f.name === selectedGitFile) ? 'U' : 'M'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button className="p-1 rounded hover:bg-ayu-line/50 text-ayu-fg/50 hover:text-ayu-fg" title="Inline diff">
@@ -1181,39 +1560,31 @@ export function EnsoAIDemoPreview() {
 
                     {/* Diff content */}
                     <div className="flex-1 overflow-auto font-mono text-xs p-4">
-                      <div className="text-ayu-fg/40 mb-2">@@ -12,7 +12,9 @@ export function Button({'{'} children, variant = 'primary' {'}'}) {'{'}</div>
-                      <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">12</span>    return (</div>
-                      <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">13</span>      {'<'}button</div>
-                      <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">14</span>        className={'{'}clsx(</div>
-                      <div className="bg-ayu-red/10 text-ayu-red border-l-2 border-ayu-red pl-2 -ml-2">
-                        <span className="text-ayu-fg/30 mr-3">15</span>-         'px-4 py-2 rounded font-medium',
-                      </div>
-                      <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
-                        <span className="text-ayu-fg/30 mr-3">15</span>+         'px-4 py-2 rounded-lg font-medium',
-                      </div>
-                      <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
-                        <span className="text-ayu-fg/30 mr-3">16</span>+         'transition-all duration-200',
-                      </div>
-                      <div className="bg-ayu-green/10 text-ayu-green border-l-2 border-ayu-green pl-2 -ml-2">
-                        <span className="text-ayu-fg/30 mr-3">17</span>+         'hover:scale-105 active:scale-95',
-                      </div>
-                      <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">18</span>          variant === 'primary' && 'bg-blue-500 text-white',</div>
-                      <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">19</span>          variant === 'secondary' && 'bg-gray-200 text-gray-800',</div>
-                      <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">20</span>        ){'}'}</div>
-                      <div className="text-ayu-fg/60">  <span className="text-ayu-fg/30 mr-3">21</span>      {'>'}</div>
+                      {diffContents[selectedGitFile]?.hunks || (
+                        <div className="text-ayu-fg/50 italic">Select a file to view diff</div>
+                      )}
                     </div>
 
                     {/* Diff stats */}
-                    <div className="px-4 py-2 border-t border-ayu-line bg-ayu-panel/30 text-xs flex items-center gap-4">
-                      <span className="text-ayu-green">+3</span>
-                      <span className="text-ayu-red">-1</span>
-                      <div className="flex items-center gap-1 ml-auto">
-                        <div className="w-16 h-1.5 bg-ayu-line rounded-full overflow-hidden">
-                          <div className="h-full w-3/4 bg-ayu-green rounded-full" />
+                    {diffContents[selectedGitFile] && (
+                      <div className="px-4 py-2 border-t border-ayu-line bg-ayu-panel/30 text-xs flex items-center gap-4">
+                        <span className="text-ayu-green">+{diffContents[selectedGitFile].additions}</span>
+                        <span className="text-ayu-red">-{diffContents[selectedGitFile].deletions}</span>
+                        <div className="flex items-center gap-1 ml-auto">
+                          <div className="w-16 h-1.5 bg-ayu-line rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-ayu-green rounded-full"
+                              style={{
+                                width: `${(diffContents[selectedGitFile].additions / (diffContents[selectedGitFile].additions + diffContents[selectedGitFile].deletions)) * 100}%`
+                              }}
+                            />
+                          </div>
+                          <span className="text-ayu-fg/40">
+                            {Math.round((diffContents[selectedGitFile].additions / (diffContents[selectedGitFile].additions + diffContents[selectedGitFile].deletions)) * 100)}%
+                          </span>
                         </div>
-                        <span className="text-ayu-fg/40">75%</span>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </motion.div>
               )}
