@@ -241,7 +241,9 @@ code {
 
 function addServerReadyListener(listener: (port: number, url: string) => void) {
   serverReadyListeners.add(listener);
-  return () => serverReadyListeners.delete(listener);
+  return () => {
+    serverReadyListeners.delete(listener);
+  };
 }
 
 interface TerminalTab {
