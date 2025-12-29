@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,6 +23,143 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { WebContainerTerminal } from './WebContainerTerminal';
+
+// Simulated AI conversation for Claude
+const claudeConversation = [
+  {
+    type: 'user',
+    content: 'Help me add a dark mode toggle to this React app',
+    delay: 1000,
+  },
+  {
+    type: 'thinking',
+    content: 'Analyzing codebase structure...',
+    delay: 2500,
+  },
+  {
+    type: 'assistant',
+    content: "I'll help you add a dark mode toggle. Let me first check your current setup.",
+    delay: 3500,
+  },
+  {
+    type: 'tool',
+    tool: 'Read',
+    file: 'src/App.tsx',
+    delay: 4500,
+  },
+  {
+    type: 'tool',
+    tool: 'Read',
+    file: 'tailwind.config.js',
+    delay: 5000,
+  },
+  {
+    type: 'assistant',
+    content: "I see you're using Tailwind CSS. I'll create a theme context and toggle component:",
+    delay: 6000,
+  },
+  {
+    type: 'code',
+    file: 'src/hooks/useTheme.ts',
+    language: 'typescript',
+    content: `export function useTheme() {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList
+      .toggle('dark', dark);
+  }, [dark]);
+
+  return { dark, toggle: () => setDark(!dark) };
+}`,
+    delay: 7500,
+  },
+];
+
+// Simulated AI conversation for Codex
+const codexConversation = [
+  {
+    type: 'user',
+    content: 'Summarize recent commits',
+    delay: 800,
+  },
+  {
+    type: 'shell',
+    command: 'git log --oneline -5',
+    delay: 1500,
+  },
+  {
+    type: 'output',
+    content: `a1b2c3d feat: add user authentication
+e4f5g6h fix: resolve login redirect issue
+i7j8k9l refactor: clean up API handlers
+m0n1o2p docs: update README
+q3r4s5t chore: bump dependencies`,
+    delay: 2500,
+  },
+  {
+    type: 'assistant',
+    content: "Here's a summary of the last 5 commits:",
+    delay: 3500,
+  },
+  {
+    type: 'list',
+    items: [
+      '**Authentication**: Added user auth system',
+      '**Bug Fix**: Fixed login redirect bug',
+      '**Refactor**: Cleaned up API handlers',
+      '**Docs**: Updated README',
+      '**Maintenance**: Bumped dependencies',
+    ],
+    delay: 4500,
+  },
+];
+
+// Simulated AI conversation for Gemini
+const geminiConversation = [
+  {
+    type: 'user',
+    content: 'Explain the architecture of this project',
+    delay: 1000,
+  },
+  {
+    type: 'thinking',
+    content: 'Analyzing project structure...',
+    delay: 2000,
+  },
+  {
+    type: 'tool',
+    tool: 'list_dir',
+    file: 'src/',
+    delay: 2800,
+  },
+  {
+    type: 'tool',
+    tool: 'read_file',
+    file: 'package.json',
+    delay: 3300,
+  },
+  {
+    type: 'assistant',
+    content: 'This is a **React + TypeScript** project with the following architecture:',
+    delay: 4200,
+  },
+  {
+    type: 'structure',
+    content: `src/
+├── components/   # React components
+├── hooks/        # Custom React hooks
+├── pages/        # Page components
+├── utils/        # Utility functions
+└── types/        # TypeScript types`,
+    delay: 5200,
+  },
+  {
+    type: 'assistant',
+    content: 'Key technologies: **Vite**, **Tailwind CSS**, **Framer Motion**',
+    delay: 6200,
+  },
+];
 
 // Mock data
 const repositories = [
@@ -134,6 +271,344 @@ const GhosttyMascot = () => (
     </g>
   </svg>
 );
+
+// Claude Session Chat with simulated conversation
+function ClaudeSessionChat({ workspacePath }: { workspacePath: string }) {
+  const [visibleMessages, setVisibleMessages] = useState<typeof claudeConversation>([]);
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    claudeConversation.forEach((msg, index) => {
+      const timer = setTimeout(() => {
+        setVisibleMessages(prev => [...prev, msg]);
+        if (index === claudeConversation.length - 1) {
+          setIsComplete(true);
+        }
+      }, msg.delay);
+      timers.push(timer);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <motion.div
+      key="claude"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Header */}
+      <div className="flex items-start gap-4 mb-6">
+        <GhosttyMascot />
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-ayu-fg font-semibold text-base">Claude Code</span>
+          </div>
+          <div className="text-ayu-fg/60 text-xs mt-0.5">
+            Opus 4.5 • API Usage Billing
+          </div>
+          <div className="text-ayu-fg/40 text-xs mt-0.5">
+            {workspacePath}
+          </div>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="space-y-4">
+        {visibleMessages.map((msg, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {msg.type === 'user' && (
+              <div className="flex items-start gap-2">
+                <span className="text-ayu-accent font-bold">&gt;</span>
+                <span className="text-ayu-fg">{msg.content}</span>
+              </div>
+            )}
+
+            {msg.type === 'thinking' && (
+              <div className="flex items-center gap-2 text-ayu-fg/50 text-xs">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  className="w-3 h-3 border border-ayu-accent/50 border-t-ayu-accent rounded-full"
+                />
+                <span>{msg.content}</span>
+              </div>
+            )}
+
+            {msg.type === 'assistant' && (
+              <div className="text-ayu-fg/80 pl-4 border-l-2 border-ayu-accent/30">
+                {msg.content}
+              </div>
+            )}
+
+            {msg.type === 'tool' && 'tool' in msg && (
+              <div className="flex items-center gap-2 text-xs bg-ayu-line/30 rounded px-3 py-1.5 w-fit">
+                <span className="text-ayu-purple">{msg.tool}</span>
+                <span className="text-ayu-fg/50">→</span>
+                <span className="text-ayu-green">{msg.file}</span>
+                <Check className="w-3 h-3 text-ayu-green" />
+              </div>
+            )}
+
+            {msg.type === 'code' && 'file' in msg && (
+              <div className="bg-[#1a1a2e] rounded-lg overflow-hidden border border-ayu-line/50">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-ayu-line/30 text-xs">
+                  <File className="w-3 h-3 text-ayu-accent" />
+                  <span className="text-ayu-fg/70">{msg.file}</span>
+                  <span className="text-ayu-fg/40 ml-auto">{msg.language}</span>
+                </div>
+                <pre className="p-3 text-xs overflow-x-auto">
+                  <code className="text-ayu-fg/80">{msg.content}</code>
+                </pre>
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Input prompt */}
+      <div className="flex items-center gap-2 mt-4">
+        <span className="text-ayu-accent">&gt;</span>
+        {!isComplete ? (
+          <motion.span
+            animate={{ opacity: [1, 0] }}
+            transition={{ duration: 0.8, repeat: Infinity }}
+            className="w-2 h-4 bg-ayu-accent/80"
+          />
+        ) : (
+          <span className="text-ayu-fg/40 text-xs">Ready for next instruction...</span>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// Codex Session Chat with simulated conversation
+function CodexSessionChat({ workspacePath }: { workspacePath: string }) {
+  const [visibleMessages, setVisibleMessages] = useState<typeof codexConversation>([]);
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    codexConversation.forEach((msg, index) => {
+      const timer = setTimeout(() => {
+        setVisibleMessages(prev => [...prev, msg]);
+        if (index === codexConversation.length - 1) {
+          setIsComplete(true);
+        }
+      }, msg.delay);
+      timers.push(timer);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <motion.div
+      key="codex"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Header */}
+      <div className="border border-ayu-line rounded-lg p-4 mb-6">
+        <div className="text-ayu-fg font-semibold mb-2">
+          <span className="text-ayu-fg/60">&gt;_</span> OpenAI Codex <span className="text-ayu-fg/40">(v0.77.0)</span>
+        </div>
+        <div className="text-ayu-fg/60 text-xs space-y-1">
+          <div>
+            <span className="text-ayu-fg/40">model:</span>
+            <span className="ml-4">gpt-5.2-codex xhigh</span>
+          </div>
+          <div>
+            <span className="text-ayu-fg/40">directory:</span>
+            <span className="ml-1">{workspacePath}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="space-y-4">
+        {visibleMessages.map((msg, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {msg.type === 'user' && (
+              <div className="bg-ayu-line/30 rounded-lg px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-ayu-fg/60">&gt;</span>
+                  <span className="text-ayu-fg">{msg.content}</span>
+                </div>
+              </div>
+            )}
+
+            {msg.type === 'shell' && 'command' in msg && (
+              <div className="flex items-center gap-2 text-xs text-ayu-yellow">
+                <span className="text-ayu-fg/50">$</span>
+                <span>{msg.command}</span>
+              </div>
+            )}
+
+            {msg.type === 'output' && (
+              <pre className="bg-[#1a1a2e] rounded p-3 text-xs text-ayu-fg/70 overflow-x-auto">
+                {msg.content}
+              </pre>
+            )}
+
+            {msg.type === 'assistant' && (
+              <div className="text-ayu-fg/80 text-sm">
+                {msg.content}
+              </div>
+            )}
+
+            {msg.type === 'list' && 'items' in msg && msg.items && (
+              <div className="space-y-1 pl-4 text-xs">
+                {msg.items.map((item, j) => (
+                  <div key={j} className="flex items-start gap-2 text-ayu-fg/70">
+                    <span className="text-ayu-green">•</span>
+                    <span dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, '<span class="text-ayu-accent font-medium">$1</span>') }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="text-ayu-fg/40 text-xs mt-4">
+        {isComplete ? '100% context left' : 'Processing...'} · <span className="text-ayu-fg/50">?</span> for shortcuts
+      </div>
+    </motion.div>
+  );
+}
+
+// Gemini Session Chat with simulated conversation
+function GeminiSessionChat({ workspacePath }: { workspacePath: string }) {
+  const [visibleMessages, setVisibleMessages] = useState<typeof geminiConversation>([]);
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    geminiConversation.forEach((msg, index) => {
+      const timer = setTimeout(() => {
+        setVisibleMessages(prev => [...prev, msg]);
+        if (index === geminiConversation.length - 1) {
+          setIsComplete(true);
+        }
+      }, msg.delay);
+      timers.push(timer);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <motion.div
+      key="gemini"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Gemini ASCII Art */}
+      <div className="mb-4 font-mono text-xs leading-tight select-none">
+        <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
+          {'  ██████╗ ███████╗███╗   ███╗██╗███╗   ██╗██╗'}
+        </div>
+        <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
+          {'██╔════╝ ██╔════╝████╗ ████║██║████╗  ██║██║'}
+        </div>
+        <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
+          {'██║  ███╗█████╗  ██╔████╔██║██║██╔██╗ ██║██║'}
+        </div>
+        <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
+          {'██║   ██║██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║'}
+        </div>
+        <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
+          {'╚██████╔╝███████╗██║ ╚═╝ ██║██║██║ ╚████║██║'}
+        </div>
+        <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
+          {' ╚═════╝ ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝'}
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="space-y-4">
+        {visibleMessages.map((msg, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {msg.type === 'user' && (
+              <div className="border border-ayu-line rounded px-3 py-2">
+                <div className="flex items-center gap-2 text-ayu-fg">
+                  <span className="text-ayu-purple">&gt;</span>
+                  <span>{msg.content}</span>
+                </div>
+              </div>
+            )}
+
+            {msg.type === 'thinking' && (
+              <div className="flex items-center gap-2 text-ayu-fg/50 text-xs">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  className="w-3 h-3 border border-purple-400/50 border-t-purple-400 rounded-full"
+                />
+                <span>{msg.content}</span>
+              </div>
+            )}
+
+            {msg.type === 'tool' && 'tool' in msg && (
+              <div className="flex items-center gap-2 text-xs bg-ayu-line/30 rounded px-3 py-1.5 w-fit">
+                <span className="text-ayu-cyan">{msg.tool}</span>
+                <span className="text-ayu-fg/50">→</span>
+                <span className="text-ayu-green">{msg.file}</span>
+                <Check className="w-3 h-3 text-ayu-green" />
+              </div>
+            )}
+
+            {msg.type === 'assistant' && msg.content && (
+              <div className="text-ayu-fg/80 text-sm" dangerouslySetInnerHTML={{
+                __html: msg.content.replace(/\*\*(.*?)\*\*/g, '<span class="text-ayu-purple font-medium">$1</span>')
+              }} />
+            )}
+
+            {msg.type === 'structure' && (
+              <pre className="bg-[#1a1a2e] rounded p-3 text-xs text-ayu-fg/70 overflow-x-auto font-mono">
+                {msg.content}
+              </pre>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <div className="text-[10px] text-ayu-fg/50 mt-4">
+        {workspacePath}
+        <span className="text-ayu-yellow ml-2">no sandbox</span>
+        <span className="text-ayu-green ml-1">Auto</span>
+        <span className="text-ayu-purple ml-1">(Gemini 3)</span>
+        <span className="ml-1">{isComplete ? '/model (100%)' : 'thinking...'} | 324.7 MB</span>
+      </div>
+    </motion.div>
+  );
+}
 
 // File tree item component
 interface FileTreeItemProps {
@@ -402,139 +877,16 @@ export function EnsoAIDemoPreview() {
               {activeTab === 'agent' && (
                 <div className="h-full p-4 font-mono text-sm overflow-auto">
                   {activeSession === 'claude' && (
-                <motion.div
-                  key="claude"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="flex items-start gap-4 mb-6">
-                    <GhosttyMascot />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-ayu-fg font-semibold text-base">Claude Code</span>
-                      </div>
-                      <div className="text-ayu-fg/60 text-xs mt-0.5">
-                        Opus 4.5 • API Usage Billing
-                      </div>
-                      <div className="text-ayu-fg/40 text-xs mt-0.5">
-                        {workspacePath}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-ayu-fg/70 mb-4">Welcome to Opus 4.5</div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-ayu-accent">&gt;</span>
-                    <motion.span
-                      animate={{ opacity: [1, 0] }}
-                      transition={{ duration: 0.8, repeat: Infinity }}
-                      className="w-2 h-4 bg-ayu-accent/80"
-                    />
-                  </div>
-                </motion.div>
+                <ClaudeSessionChat workspacePath={workspacePath} />
               )}
 
               {activeSession === 'codex' && (
-                <motion.div
-                  key="codex"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="border border-ayu-line rounded-lg p-4 mb-6">
-                    <div className="text-ayu-fg font-semibold mb-2">
-                      <span className="text-ayu-fg/60">&gt;_</span> OpenAI Codex <span className="text-ayu-fg/40">(v0.77.0)</span>
-                    </div>
-                    <div className="text-ayu-fg/60 text-xs space-y-1">
-                      <div>
-                        <span className="text-ayu-fg/40">model:</span>
-                        <span className="ml-4">gpt-5.2-codex xhigh</span>
-                        <span className="ml-4 text-ayu-green">/model</span>
-                        <span className="text-ayu-fg/40"> to change</span>
-                      </div>
-                      <div>
-                        <span className="text-ayu-fg/40">directory:</span>
-                        <span className="ml-1">{workspacePath}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-ayu-fg/50 mb-6">
-                    <span className="text-ayu-fg/70">Tip:</span> You can run any shell command from Codex using{' '}
-                    <span className="text-ayu-yellow">!</span> (e.g.{' '}
-                    <span className="text-ayu-green">!ls</span>)
-                  </div>
-                  <div className="bg-ayu-line/30 rounded-lg px-4 py-3 mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-ayu-fg/60">&gt;</span>
-                      <span className="text-ayu-yellow">S</span>
-                      <span className="text-ayu-fg/50">ummarize recent commits</span>
-                    </div>
-                  </div>
-                  <div className="text-ayu-fg/40 text-xs">
-                    100% context left · <span className="text-ayu-fg/50">?</span> for shortcuts
-                  </div>
-                </motion.div>
+                <CodexSessionChat workspacePath={workspacePath} />
               )}
 
               {activeSession === 'gemini' && (
-                <motion.div
-                  key="gemini"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {/* Gemini ASCII Art */}
-                  <div className="mb-4 font-mono text-xs leading-tight select-none">
-                    <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
-                      {'  ██████╗ ███████╗███╗   ███╗██╗███╗   ██╗██╗'}
-                    </div>
-                    <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
-                      {'██╔════╝ ██╔════╝████╗ ████║██║████╗  ██║██║'}
-                    </div>
-                    <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
-                      {'██║  ███╗█████╗  ██╔████╔██║██║██╔██╗ ██║██║'}
-                    </div>
-                    <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
-                      {'██║   ██║██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║'}
-                    </div>
-                    <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
-                      {'╚██████╔╝███████╗██║ ╚═╝ ██║██║██║ ╚████║██║'}
-                    </div>
-                    <div className="bg-gradient-to-r from-blue-400 via-purple-400 to-rose-400 bg-clip-text text-transparent font-bold">
-                      {' ╚═════╝ ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝'}
-                    </div>
-                  </div>
-                  <div className="text-ayu-fg/50 mb-4 space-y-1 text-xs">
-                    <div className="text-ayu-fg/60">Tips for getting started:</div>
-                    <div>1. Ask questions, edit files, or run commands.</div>
-                    <div>2. Be specific for the best results.</div>
-                    <div>3. <span className="text-ayu-green">/help</span> for more information.</div>
-                  </div>
-                  <div className="text-ayu-fg/70 mb-4 text-xs">
-                    <div>Using:</div>
-                    <div className="ml-2">- 1 GEMINI.md file</div>
-                    <div className="ml-2">- 2 MCP servers</div>
-                  </div>
-                  <div className="border border-ayu-line rounded px-3 py-2 mb-3">
-                    <div className="flex items-center gap-2 text-ayu-fg/50">
-                      <span>&gt;</span>
-                      <motion.span
-                        animate={{ opacity: [1, 0] }}
-                        transition={{ duration: 0.8, repeat: Infinity }}
-                        className="w-2 h-4 bg-ayu-fg/40"
-                      />
-                      <span className="text-ayu-fg/40">Type your message or @path/to/file</span>
-                    </div>
-                  </div>
-                  <div className="text-[10px] text-ayu-fg/50">
-                    {workspacePath}
-                    <span className="text-ayu-yellow ml-2">no sandbox</span>
-                    <span className="text-ayu-green ml-1">Auto</span>
-                    <span className="text-ayu-purple ml-1">(Gemini 3)</span>
-                    <span className="ml-1">/model (100%) | 324.7 MB</span>
-                  </div>
-                </motion.div>
-                  )}
+                <GeminiSessionChat workspacePath={workspacePath} />
+              )}
                 </div>
               )}
 
