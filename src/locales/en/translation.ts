@@ -12,6 +12,7 @@ export default {
     },
     nav: {
       features: "Features",
+      pricing: "Pricing",
       themes: "Themes",
       changelog: "Changelog",
       star: "Star",
@@ -55,6 +56,52 @@ export default {
         }
       }
     },
+    pricing: {
+      title: "Simple, transparent pricing.",
+      subtitle: "Start free. Upgrade when you need parallel agents and priority support. Cancel anytime.",
+      popular: "Most popular",
+      note: "All paid plans are billed in USD via Creem. 14-day full refund. Taxes may apply.",
+      plans: {
+        free: {
+          name: "Community",
+          price: "$0",
+          period: "/forever",
+          desc: "For solo developers exploring multi-agent workflows.",
+          cta: "Download",
+          features: [
+            "Single active worktree",
+            "Bring your own AI keys (Claude, OpenAI, Gemini)",
+            "Basic Git visual tools",
+            "Community support"
+          ]
+        },
+        pro: {
+          name: "Pro",
+          period: "/month",
+          desc: "For professionals running parallel agents every day.",
+          cta: "Subscribe to Pro",
+          features: [
+            "Unlimited parallel worktrees",
+            "Multi-agent orchestration (Claude · Codex · Gemini)",
+            "AI code review & smart commit messages",
+            "Global project search & 3-way merge",
+            "Priority email support"
+          ]
+        },
+        lifetime: {
+          name: "Lifetime",
+          period: "/once",
+          desc: "Pay once, own it. One year of feature updates included.",
+          cta: "Buy Lifetime",
+          features: [
+            "Everything in Pro",
+            "One-time payment, no recurring fee",
+            "12 months of feature updates",
+            "Lifetime priority support"
+          ]
+        }
+      }
+    },
     themes: {
       title: "Your aesthetic, preserved.",
       desc: "EnsoAI respects your taste. Built-in variety of Ghostty themes, customizable fonts, and synchronized visual style across all worktrees.",
@@ -64,9 +111,13 @@ export default {
       tagline: "Git Worktree Manager + AI Programming Assistant.",
       product: "Product",
       community: "Community",
+      legal: "Legal & Support",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service",
+      support: "Contact Support",
       newsChannel: "News Channel",
       discussGroup: "Discussion Group",
-      rights: "EnsoAI. All rights reserved.",
+      rights: "All rights reserved.",
       designed: "Designed with ♥ for developers."
     },
     demo: {
