@@ -1,7 +1,6 @@
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Features } from './components/Features';
-import { Pricing } from './components/Pricing';
 import { Footer } from './components/Footer';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
@@ -101,8 +100,7 @@ function App() {
       <main>
         <Hero />
         <Features />
-        <Pricing />
-
+        
         {/* Themes Section - Refactored for cleaner look */}
         <section id="themes" className="py-24 bg-ayu-bg border-t border-ayu-line transition-colors duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

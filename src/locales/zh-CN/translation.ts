@@ -12,7 +12,6 @@ export default {
     },
     nav: {
       features: "特性",
-      pricing: "定价",
       themes: "主题",
       changelog: "更新日志",
       star: "Star",
@@ -56,52 +55,6 @@ export default {
         }
       }
     },
-    pricing: {
-      title: "简单透明的定价",
-      subtitle: "免费开始使用。需要并行 Agent 与优先支持时再升级。随时可取消。",
-      popular: "最受欢迎",
-      note: "所有付费方案通过 Creem 以美元计价。14 天内无理由全额退款。可能产生当地税费。",
-      plans: {
-        free: {
-          name: "社区版",
-          price: "$0",
-          period: "/永久免费",
-          desc: "面向探索多 Agent 工作流的独立开发者。",
-          cta: "下载",
-          features: [
-            "单个活动 Worktree",
-            "自带 AI Key(Claude / OpenAI / Gemini)",
-            "基础可视化 Git 工具",
-            "社区支持"
-          ]
-        },
-        pro: {
-          name: "Pro",
-          period: "/月",
-          desc: "为每天并行运行多 Agent 的专业开发者打造。",
-          cta: "订阅 Pro",
-          features: [
-            "无限并行 Worktree",
-            "多 Agent 编排(Claude · Codex · Gemini)",
-            "AI 代码审查与智能 Commit",
-            "项目全局搜索与三栏合并",
-            "邮件优先支持"
-          ]
-        },
-        lifetime: {
-          name: "终身版",
-          period: "/一次性",
-          desc: "一次买断，长期拥有。包含 12 个月功能更新。",
-          cta: "买断终身版",
-          features: [
-            "包含 Pro 全部功能",
-            "一次付费，无任何续费",
-            "12 个月功能更新",
-            "终身优先技术支持"
-          ]
-        }
-      }
-    },
     themes: {
       title: "延续你的美学。",
       desc: "EnsoAI 尊重你的品味。内置多种 Ghostty 主题，支持自定义字体，并在所有 Worktree 间同步你的视觉风格。",
@@ -111,13 +64,9 @@ export default {
       tagline: "Git Worktree 管理器 + AI 编程助手。",
       product: "产品",
       community: "社区",
-      legal: "法律与支持",
-      privacy: "隐私政策",
-      terms: "服务条款",
-      support: "联系客服",
       newsChannel: "更新频道",
       discussGroup: "讨论群组",
-      rights: "保留所有权利。",
+      rights: "EnsoAI. 保留所有权利。",
       designed: "为开发者 ♥ 设计。"
     },
     demo: {

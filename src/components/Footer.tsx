@@ -1,4 +1,4 @@
-import { Github, Mail, Send } from 'lucide-react';
+import { Github, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export function Footer() {
@@ -7,7 +7,7 @@ export function Footer() {
   return (
     <footer className="bg-ayu-bg border-t border-ayu-line pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="col-span-1 md:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
               <img src="/logo.png" alt="EnsoAI Logo" className="w-6 h-6 rounded shadow-sm" />
@@ -16,22 +16,14 @@ export function Footer() {
             <p className="text-ayu-fg/60 text-sm max-w-sm leading-relaxed">
               {t('footer.tagline')}
             </p>
-            <a
-              href="mailto:admin@j3.do"
-              className="inline-flex items-center gap-2 text-sm text-ayu-fg/70 hover:text-ayu-accent transition-colors"
-            >
-              <Mail className="w-4 h-4" />
-              admin@j3.do
-            </a>
           </div>
-
+          
           <div>
             <h3 className="font-semibold text-ayu-fg mb-4 text-sm uppercase tracking-wider">{t('footer.product')}</h3>
             <ul className="space-y-3 text-sm">
               <li><a href="#features" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">{t('nav.features')}</a></li>
-              <li><a href="#pricing" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">{t('nav.pricing')}</a></li>
               <li><a href="#themes" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">{t('nav.themes')}</a></li>
-              <li><a href="https://github.com/j3n5en/EnsoAI/releases/latest" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">{t('nav.download')}</a></li>
+              <li><a href="#" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">{t('nav.download')}</a></li>
             </ul>
           </div>
 
@@ -43,20 +35,11 @@ export function Footer() {
               <li><a href="https://t.me/EnsoAi_Offical" target="_blank" rel="noopener noreferrer" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors flex items-center gap-2"><Send className="w-4 h-4"/> {t('footer.discussGroup')}</a></li>
             </ul>
           </div>
-
-          <div>
-            <h3 className="font-semibold text-ayu-fg mb-4 text-sm uppercase tracking-wider">{t('footer.legal')}</h3>
-            <ul className="space-y-3 text-sm">
-              <li><a href="/privacy.html" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">{t('footer.privacy')}</a></li>
-              <li><a href="/terms.html" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">{t('footer.terms')}</a></li>
-              <li><a href="mailto:admin@j3.do" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">{t('footer.support')}</a></li>
-            </ul>
-          </div>
         </div>
-
+        
         <div className="border-t border-ayu-line mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-ayu-fg/40">
-            © {new Date().getFullYear()} EnsoAI Team. {t('footer.rights')}
+            © {new Date().getFullYear()} {t('footer.rights')}
           </p>
           <p className="text-sm text-ayu-fg/40">
              {t('footer.designed')}

@@ -19,9 +19,6 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-ayu-fg/70 hover:text-ayu-accent transition-colors">{t('nav.features')}</a>
-            <a href="#pricing" className="text-sm text-ayu-fg/70 hover:text-ayu-accent transition-colors">{t('nav.pricing')}</a>
-            <a href="#themes" className="text-sm text-ayu-fg/70 hover:text-ayu-accent transition-colors">{t('nav.themes')}</a>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
