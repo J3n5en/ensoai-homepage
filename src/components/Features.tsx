@@ -1,58 +1,97 @@
 import { clsx } from "clsx";
 import { AnimatePresence, motion } from "framer-motion";
-import { Brain, GitBranch, GitMerge, Layers, Search, Zap } from "lucide-react";
+import { Bot, Brain, GitBranch, GitCompare, GitMerge, Layers, Palette, Search, Smartphone, Zap } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { ProductId } from "../products";
 
-export function Features() {
+interface FeaturesProps {
+	product: ProductId;
+}
+
+export function Features({ product }: FeaturesProps) {
 	const { t } = useTranslation();
 	const [activeFeature, setActiveFeature] = useState(0);
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-	const features = [
-		{
-			icon: <Brain className="w-5 h-5" />,
-			title: t("features.items.aiNative.title"),
-			description: t("features.items.aiNative.desc"),
-			image: "/feature-terminal.png",
-			color: "text-ayu-accent",
-		},
-		{
-			icon: <GitBranch className="w-5 h-5" />,
-			title: t("features.items.blazingFast.title"),
-			description: t("features.items.blazingFast.desc"),
-			image: "/feature-editor.png",
-			color: "text-ayu-string",
-		},
-		{
-			icon: <Zap className="w-5 h-5" />,
-			title: t("features.items.beautifulThemes.title"),
-			description: t("features.items.beautifulThemes.desc"),
-			image: "/feature-git.png",
-			color: "text-ayu-func",
-		},
-		{
-			icon: <Layers className="w-5 h-5" />,
-			title: t("features.items.visualGit.title"),
-			description: t("features.items.visualGit.desc"),
-			image: "/feature-agents.png",
-			color: "text-ayu-regexp",
-		},
-		{
-			icon: <GitMerge className="w-5 h-5" />,
-			title: t("features.items.mergeTool.title"),
-			description: t("features.items.mergeTool.desc"),
-			image: "/feature-merge.png",
-			color: "text-ayu-constant",
-		},
-		{
-			icon: <Search className="w-5 h-5" />,
-			title: t("features.items.globalSearch.title"),
-			description: t("features.items.globalSearch.desc"),
-			image: "/feature-global-search.png",
-			color: "text-ayu-tag",
-		},
-	];
+	const features = product === "ensocode"
+		? [
+			{
+				icon: <Bot className="w-5 h-5" />,
+				title: t("ensocode.features.items.orchestration.title"),
+				description: t("ensocode.features.items.orchestration.desc"),
+				image: "/ensocode/chat.jpg",
+				color: "text-ayu-accent",
+			},
+			{
+				icon: <GitCompare className="w-5 h-5" />,
+				title: t("ensocode.features.items.review.title"),
+				description: t("ensocode.features.items.review.desc"),
+				image: "/ensocode/split-workbench.png",
+				color: "text-ayu-string",
+			},
+			{
+				icon: <Smartphone className="w-5 h-5" />,
+				title: t("ensocode.features.items.mobile.title"),
+				description: t("ensocode.features.items.mobile.desc"),
+				image: "/ensocode/phone.png",
+				color: "text-ayu-func",
+			},
+			{
+				icon: <Palette className="w-5 h-5" />,
+				title: t("ensocode.features.items.personalization.title"),
+				description: t("ensocode.features.items.personalization.desc"),
+				image: "/ensocode/appearance.png",
+				color: "text-ayu-regexp",
+			},
+		]
+		: [
+			{
+				icon: <Brain className="w-5 h-5" />,
+				title: t("ensoai.features.items.aiNative.title"),
+				description: t("ensoai.features.items.aiNative.desc"),
+				image: "/feature-terminal.png",
+				color: "text-ayu-accent",
+			},
+			{
+				icon: <GitBranch className="w-5 h-5" />,
+				title: t("ensoai.features.items.blazingFast.title"),
+				description: t("ensoai.features.items.blazingFast.desc"),
+				image: "/feature-editor.png",
+				color: "text-ayu-string",
+			},
+			{
+				icon: <Zap className="w-5 h-5" />,
+				title: t("ensoai.features.items.beautifulThemes.title"),
+				description: t("ensoai.features.items.beautifulThemes.desc"),
+				image: "/feature-git.png",
+				color: "text-ayu-func",
+			},
+			{
+				icon: <Layers className="w-5 h-5" />,
+				title: t("ensoai.features.items.visualGit.title"),
+				description: t("ensoai.features.items.visualGit.desc"),
+				image: "/feature-agents.png",
+				color: "text-ayu-regexp",
+			},
+			{
+				icon: <GitMerge className="w-5 h-5" />,
+				title: t("ensoai.features.items.mergeTool.title"),
+				description: t("ensoai.features.items.mergeTool.desc"),
+				image: "/feature-merge.png",
+				color: "text-ayu-constant",
+			},
+			{
+				icon: <Search className="w-5 h-5" />,
+				title: t("ensoai.features.items.globalSearch.title"),
+				description: t("ensoai.features.items.globalSearch.desc"),
+				image: "/feature-global-search.png",
+				color: "text-ayu-tag",
+			},
+		];
+
+	// 产品切换后特性数量会变化，钳制索引避免越界
+	const safeIndex = activeFeature % features.length;
 
 	const startTimer = useCallback(() => {
 		if (timerRef.current) {
@@ -85,10 +124,10 @@ export function Features() {
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="mb-20 text-center">
 					<h2 className="text-4xl md:text-5xl font-bold text-ayu-fg mb-6 tracking-tight">
-						{t("features.title")}
+						{t(`${product}.features.title`)}
 					</h2>
 					<p className="text-xl text-ayu-fg/60 max-w-2xl mx-auto leading-relaxed font-light">
-						{t("features.subtitle")}
+						{t(`${product}.features.subtitle`)}
 					</p>
 				</div>
 
@@ -99,13 +138,14 @@ export function Features() {
 							<button
 								key={index}
 								onClick={() => handleFeatureClick(index)}
-																	className={clsx(
-																		"text-left p-6 rounded-2xl transition-all duration-300 border group relative overflow-hidden",
-																		activeFeature === index
-																			? "bg-ayu-panel border-ayu-line shadow-lg scale-[1.02]"
-																			: "bg-transparent border-transparent hover:bg-ayu-panel/50 hover:border-ayu-line/50 opacity-60 hover:opacity-100",
-																	)}
-																>								{activeFeature === index && (
+								className={clsx(
+									"text-left p-6 rounded-2xl transition-all duration-300 border group relative overflow-hidden",
+									safeIndex === index
+										? "bg-ayu-panel border-ayu-line shadow-lg scale-[1.02]"
+										: "bg-transparent border-transparent hover:bg-ayu-panel/50 hover:border-ayu-line/50 opacity-60 hover:opacity-100",
+								)}
+							>
+								{safeIndex === index && (
 									<motion.div
 										layoutId="active-glow"
 										className="absolute inset-0 bg-gradient-to-r from-ayu-accent/5 to-transparent opacity-50"
@@ -116,7 +156,7 @@ export function Features() {
 										<div
 											className={clsx(
 												"p-2 rounded-lg transition-colors",
-												activeFeature === index
+												safeIndex === index
 													? "bg-ayu-bg shadow-sm"
 													: "bg-transparent",
 											)}
@@ -126,7 +166,7 @@ export function Features() {
 										<h3
 											className={clsx(
 												"text-xl font-bold transition-colors",
-												activeFeature === index
+												safeIndex === index
 													? "text-ayu-fg"
 													: "text-ayu-fg/80",
 											)}
@@ -157,9 +197,9 @@ export function Features() {
 							<div className="relative bg-ayu-bg/10 aspect-[16/10]">
 								<AnimatePresence initial={false}>
 									<motion.img
-										key={activeFeature}
-										src={features[activeFeature].image}
-										alt={features[activeFeature].title}
+										key={`${product}-${safeIndex}`}
+										src={features[safeIndex].image}
+										alt={features[safeIndex].title}
 										initial={{ opacity: 0 }}
 										animate={{ opacity: 1 }}
 										exit={{ opacity: 0 }}
