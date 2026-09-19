@@ -39,7 +39,7 @@ export function Footer({ product }: FooterProps) {
               <li><a href={active.githubUrl} className="text-ayu-fg/60 hover:text-ayu-accent transition-colors flex items-center gap-2"><Github className="w-4 h-4"/> GitHub</a></li>
               <li><a href="https://t.me/EnsoAI_news" target="_blank" rel="noopener noreferrer" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors flex items-center gap-2"><Send className="w-4 h-4"/> {t('footer.newsChannel')}</a></li>
               <li><a href="https://t.me/EnsoCode_Official" target="_blank" rel="noopener noreferrer" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors flex items-center gap-2"><Send className="w-4 h-4"/> {t('footer.discussGroup')}</a></li>
-              <li><a href="https://linux.do" target="_blank" rel="noopener noreferrer" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">LINUX DO</a></li>
+              <li><a href="https://linux.do" target="_blank" rel="noopener noreferrer" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors flex items-center gap-2"><img src="/linux-do.svg" alt="" className="w-4 h-4"/> LINUX DO</a></li>
             </ul>
           </div>
         </div>
