@@ -10,6 +10,7 @@ export default {
     footer: {
       product: "产品",
       community: "社区",
+      friends: "友链",
       newsChannel: "更新频道",
       discussGroup: "讨论群组",
       rights: "保留所有权利。",

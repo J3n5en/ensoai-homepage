@@ -10,6 +10,7 @@ export default {
     footer: {
       product: "Product",
       community: "Community",
+      friends: "Friends",
       newsChannel: "News Channel",
       discussGroup: "Discussion Group",
       rights: "All rights reserved.",

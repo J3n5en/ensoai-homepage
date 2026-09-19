@@ -13,7 +13,7 @@ export function Footer({ product }: FooterProps) {
   return (
     <footer className="bg-ayu-bg border-t border-ayu-line pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12">
           <div className="col-span-1 md:col-span-2 space-y-4">
             <div className="flex items-center gap-2">
               <img src={active.logo} alt={`${active.name} Logo`} className="w-6 h-6 rounded shadow-sm" />
@@ -39,6 +39,15 @@ export function Footer({ product }: FooterProps) {
               <li><a href={active.githubUrl} className="text-ayu-fg/60 hover:text-ayu-accent transition-colors flex items-center gap-2"><Github className="w-4 h-4"/> GitHub</a></li>
               <li><a href="https://t.me/EnsoAI_news" target="_blank" rel="noopener noreferrer" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors flex items-center gap-2"><Send className="w-4 h-4"/> {t('footer.newsChannel')}</a></li>
               <li><a href="https://t.me/EnsoCode_Official" target="_blank" rel="noopener noreferrer" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors flex items-center gap-2"><Send className="w-4 h-4"/> {t('footer.discussGroup')}</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-ayu-fg mb-4 text-sm uppercase tracking-wider">{t('footer.friends')}</h3>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a href="https://linux.do" target="_blank" rel="noopener noreferrer" className="text-ayu-fg/60 hover:text-ayu-accent transition-colors block">LINUX DO</a>
+              </li>
             </ul>
           </div>
         </div>
