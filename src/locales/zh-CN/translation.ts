@@ -85,11 +85,19 @@ export default {
         coworker: "数字同事",
         dispatchedTo: "已派发给",
         completed: "已完成",
+        todos: "任务清单",
+        todosHide: "隐藏，清单更新后再显示",
+        fold: {
+          worked: "已工作 {{duration}}",
+          thinking: "{{count}} 段思考",
+          tools: "{{count}} 个工具调用"
+        },
         tools: {
           read: "读取文件",
           bash: "运行命令",
           search: "搜索",
-          edit: "编辑文件"
+          edit: "编辑文件",
+          todo: "更新待办"
         },
         approval: {
           title: "需要审批",

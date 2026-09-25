@@ -9,13 +9,18 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Circle,
+  CircleDot,
   CircleStop,
   Folder,
   GitBranch,
   History,
+  Layers,
   ListFilter,
+  ListTodo,
   Loader2,
   Lock,
+  MessageCircle,
   Mic,
   Paperclip,
   Pause,
@@ -30,6 +35,7 @@ import {
   TerminalSquare,
   Wifi,
   X,
+  Zap,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -39,10 +45,13 @@ import { clsx } from 'clsx';
 
 type DiffLine = { kind: 'add' | 'del' | 'ctx'; text: string };
 
+type Todo = { content: string; status: 'completed' | 'in_progress' | 'pending' };
+
 type ToolContent =
   | { kind: 'diff'; added: number; removed: number; lines: DiffLine[] }
   | { kind: 'output'; text: string }
-  | { kind: 'file'; lines: string[] };
+  | { kind: 'file'; lines: string[] }
+  | { kind: 'todos'; items: Todo[] };
 
 interface Step {
   type:
@@ -59,7 +68,7 @@ interface Step {
   /** ms to wait after previous step before revealing this one */
   gap: number;
   content?: string;
-  tool?: 'read' | 'bash' | 'edit' | 'search';
+  tool?: 'read' | 'bash' | 'edit' | 'search' | 'todo';
   target?: string;
   duration?: string;
   toolContent?: ToolContent;
@@ -72,12 +81,18 @@ interface Step {
 
 type Approval = 'pending' | 'approved' | 'rejected';
 
+interface ChildAgent {
+  name: string;
+  mode: 'task' | 'coworker';
+  script: Step[];
+}
+
 interface Session {
   id: string;
   title: string;
   model: string;
   script: Step[];
-  coworker?: { name: string; script: Step[] };
+  agents?: ChildAgent[];
 }
 
 interface Repo {
@@ -85,6 +100,31 @@ interface Repo {
   branch: string;
   sessions: Session[];
 }
+
+function todoStep(gap: number, plan: string[], done: number, skipIfRejected?: boolean): Step {
+  return {
+    type: 'tool', gap, tool: 'todo', target: `${done}/${plan.length}`, duration: '0.1s', skipIfRejected,
+    toolContent: {
+      kind: 'todos',
+      items: plan.map((content, i) => ({
+        content,
+        status: i < done ? 'completed' : i === done ? 'in_progress' : 'pending',
+      })),
+    },
+  };
+}
+
+const cartPlan = [
+  'Locate cart pricing logic',
+  'Apply second-item-half-price discount',
+  'Run cart tests',
+];
+
+const i18nPlan = [
+  'Find hardcoded checkout copy',
+  'Draft en/zh locale entries',
+  'Replace strings with t() calls',
+];
 
 const repos: Repo[] = [
   {
@@ -99,8 +139,10 @@ const repos: Repo[] = [
           { type: 'user', gap: 900, content: 'Cart needs the second-item-half-price promo before Friday\'s campaign.' },
           { type: 'thinking', gap: 1300, content: 'Decomposing the task, planning agent dispatch…' },
           { type: 'goal', gap: 1400, content: 'Ship second-item-half-price cart discount' },
+          todoStep(1100, cartPlan, 0),
           { type: 'dispatch', gap: 1700, name: 'scout', task: 'Locate cart pricing logic' },
           { type: 'agent-done', gap: 2400, name: 'scout', result: 'Found 3 relevant files: pricing.ts, CartSummary.tsx, cart.test.ts' },
+          todoStep(1000, cartPlan, 1),
           {
             type: 'tool', gap: 1500, tool: 'read', target: 'src/cart/pricing.ts', duration: '0.4s',
             toolContent: {
@@ -127,6 +169,7 @@ const repos: Repo[] = [
               ],
             },
           },
+          todoStep(1000, cartPlan, 2),
           { type: 'approval', gap: 1700, command: 'pnpm test -- cart' },
           {
             type: 'tool', gap: 1500, tool: 'bash', target: 'pnpm test -- cart', duration: '842ms', skipIfRejected: true,
@@ -135,8 +178,23 @@ const repos: Repo[] = [
               text: '✓ cart.pricing › second item half price\n✓ cart.pricing › odd item count rounds down\n\nTest Files  1 passed (1)\n     Tests  2 passed (2)',
             },
           },
+          todoStep(1000, cartPlan, 3, true),
           { type: 'tasknote', gap: 1300, content: 'Checkpoint #12 · before cart discount edit' },
           { type: 'text', gap: 1600, content: 'Done. The discount applies to the cheapest item of every pair, tests pass, and checkpoint #12 is saved for one-click rollback.' },
+        ],
+        agents: [
+          {
+            name: 'scout',
+            mode: 'task',
+            script: [
+              { type: 'thinking', gap: 500, content: 'Scanning src/cart for price computation…' },
+              {
+                type: 'tool', gap: 700, tool: 'search', target: 'price|discount in src/cart/**', duration: '0.2s',
+                toolContent: { kind: 'output', text: 'src/cart/pricing.ts\nsrc/cart/CartSummary.tsx\nsrc/cart/cart.test.ts' },
+              },
+              { type: 'text', gap: 900, content: 'Found 3 relevant files: pricing.ts, CartSummary.tsx, cart.test.ts' },
+            ],
+          },
         ],
       },
       {
@@ -149,6 +207,7 @@ const repos: Repo[] = [
             type: 'tool', gap: 1500, tool: 'search', target: '"Checkout" in src/**/*.tsx', duration: '0.3s',
             toolContent: { kind: 'output', text: '14 matches in 5 files' },
           },
+          todoStep(1000, i18nPlan, 1),
           { type: 'text', gap: 1600, content: 'Found 14 hardcoded strings across 5 files. Drafting en/zh entries now.' },
           { type: 'tasknote', gap: 1300, content: 'Checkpoint #7 · before i18n extraction' },
         ],
@@ -170,33 +229,36 @@ const repos: Repo[] = [
           { type: 'agent-done', gap: 9500, name: 'db-detective', result: 'Root cause: missing composite index on orders(status, created_at). Migration drafted.' },
           { type: 'text', gap: 1600, content: 'Migration ready — p95 should drop from ~1.8s to ~12ms. Review the diff in db-detective\'s tab. Want me to apply it?' },
         ],
-        coworker: {
-          name: 'db-detective',
-          script: [
-            { type: 'thinking', gap: 1200, content: 'Reproducing the slow query…' },
-            {
-              type: 'tool', gap: 1800, tool: 'bash', target: "EXPLAIN ANALYZE SELECT … WHERE status='pending'", duration: '1.8s',
-              toolContent: {
-                kind: 'output',
-                text: 'Seq Scan on orders  (cost=0.00..42610.00 rows=2,100,044)\n  Filter: (status = \'pending\'::text)\nPlanning Time: 0.121 ms\nExecution Time: 1842.6 ms',
+        agents: [
+          {
+            name: 'db-detective',
+            mode: 'coworker',
+            script: [
+              { type: 'thinking', gap: 1200, content: 'Reproducing the slow query…' },
+              {
+                type: 'tool', gap: 1800, tool: 'bash', target: "EXPLAIN ANALYZE SELECT … WHERE status='pending'", duration: '1.8s',
+                toolContent: {
+                  kind: 'output',
+                  text: 'Seq Scan on orders  (cost=0.00..42610.00 rows=2,100,044)\n  Filter: (status = \'pending\'::text)\nPlanning Time: 0.121 ms\nExecution Time: 1842.6 ms',
+                },
               },
-            },
-            { type: 'text', gap: 1700, content: 'Seq scan over 2.1M rows — missing composite index on orders(status, created_at).' },
-            {
-              type: 'tool', gap: 1800, tool: 'edit', target: 'migrations/0042_orders_status_idx.sql', duration: '0.6s',
-              toolContent: {
-                kind: 'diff', added: 3, removed: 0,
-                lines: [
-                  { kind: 'add', text: 'CREATE INDEX CONCURRENTLY idx_orders_status_created' },
-                  { kind: 'add', text: '  ON orders (status, created_at DESC)' },
-                  { kind: 'add', text: "  WHERE status = 'pending';" },
-                ],
+              { type: 'text', gap: 1700, content: 'Seq scan over 2.1M rows — missing composite index on orders(status, created_at).' },
+              {
+                type: 'tool', gap: 1800, tool: 'edit', target: 'migrations/0042_orders_status_idx.sql', duration: '0.6s',
+                toolContent: {
+                  kind: 'diff', added: 3, removed: 0,
+                  lines: [
+                    { kind: 'add', text: 'CREATE INDEX CONCURRENTLY idx_orders_status_created' },
+                    { kind: 'add', text: '  ON orders (status, created_at DESC)' },
+                    { kind: 'add', text: "  WHERE status = 'pending';" },
+                  ],
+                },
               },
-            },
-            { type: 'tasknote', gap: 1300, content: 'Checkpoint #5 · before migration 0042' },
-            { type: 'text', gap: 1400, content: 'Done — migration drafted at migrations/0042_orders_status_idx.sql.' },
-          ],
-        },
+              { type: 'tasknote', gap: 1300, content: 'Checkpoint #5 · before migration 0042' },
+              { type: 'text', gap: 1400, content: 'Done — migration drafted at migrations/0042_orders_status_idx.sql.' },
+            ],
+          },
+        ],
       },
     ],
   },
@@ -249,6 +311,17 @@ function AgentAvatar({ className }: { className?: string }) {
     <div className={clsx('shrink-0 rounded-md bg-ayu-line/50 flex items-center justify-center', className)}>
       <Bot className="w-[60%] h-[60%] text-ayu-fg/60" />
     </div>
+  );
+}
+
+function StatusDot({ running }: { running: boolean }) {
+  return (
+    <span
+      className={clsx(
+        'size-2 shrink-0 rounded-full',
+        running ? 'animate-pulse bg-ayu-accent' : 'border border-ayu-fg/50',
+      )}
+    />
   );
 }
 
@@ -374,17 +447,85 @@ function ToolRow({ step, instant }: { step: Step; instant: boolean }) {
               ))}
             </div>
           )}
+          {step.toolContent.kind === 'todos' && (
+            <div className="px-3 py-2">
+              <TodoList todos={step.toolContent.items} />
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function DispatchRow({ name }: { name: string }) {
+function TodoList({ todos }: { todos: Todo[] }) {
+  return (
+    <ul className="space-y-0.5 text-xs">
+      {todos.map((todo) => (
+        <li key={todo.content} className="flex items-start gap-1.5">
+          {todo.status === 'completed' ? (
+            <Check className="mt-0.5 h-3 w-3 shrink-0 text-ayu-string" />
+          ) : todo.status === 'in_progress' ? (
+            <CircleDot className="mt-0.5 h-3 w-3 shrink-0 text-ayu-accent" />
+          ) : (
+            <Circle className="mt-0.5 h-3 w-3 shrink-0 text-ayu-fg/30" />
+          )}
+          <span
+            className={clsx(
+              todo.status === 'completed'
+                ? 'text-ayu-fg/60 line-through'
+                : todo.status === 'in_progress'
+                  ? 'font-medium text-ayu-fg'
+                  : 'text-ayu-fg/60',
+            )}
+          >
+            {todo.content}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function formatDuration(ms: number) {
+  const s = ms / 1000;
+  if (s < 60) return `${Math.round(s * 10) / 10}s`;
+  const whole = Math.round(s);
+  return `${Math.floor(whole / 60)}m${whole % 60}s`;
+}
+
+function FoldRow({ steps, expanded, onToggle }: { steps: Step[]; expanded: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
+  const thinking = steps.filter((s) => s.type === 'thinking').length;
+  const tools = steps.filter((s) => s.type !== 'thinking' && s.type !== 'agent-done').length;
+  const parts = [
+    thinking > 0 && t('ensocode.demo.fold.thinking', { count: thinking }),
+    tools > 0 && t('ensocode.demo.fold.tools', { count: tools }),
+  ].filter(Boolean);
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex min-h-[30px] w-full items-center gap-2 rounded-lg pr-1.5 text-left text-[13px] text-ayu-fg/60 transition-colors hover:bg-ayu-line/30 hover:text-ayu-fg"
+    >
+      <span className="flex size-[22px] shrink-0 items-center justify-center rounded-full border border-ayu-line">
+        <Layers className="size-3" />
+      </span>
+      <span className="shrink-0 font-medium text-ayu-fg/90">
+        {t('ensocode.demo.fold.worked', { duration: formatDuration(steps.reduce((ms, s) => ms + s.gap, 0)) })}
+      </span>
+      <span className="min-w-0 flex-1 truncate">{parts.join(' · ')}</span>
+      <ChevronRight className={clsx('h-3 w-3 shrink-0 transition-transform', expanded && 'rotate-90')} />
+    </button>
+  );
+}
+
+function DispatchRow({ name, task }: { name: string; task?: boolean }) {
+  const { t } = useTranslation();
+  const Icon = task ? Zap : Bot;
   return (
     <div className="flex items-center gap-2 rounded-md border border-ayu-line/60 bg-ayu-line/20 px-2.5 py-2 text-xs">
-      <Bot className="h-3.5 w-3.5 shrink-0 text-ayu-fg" />
+      <Icon className="h-3.5 w-3.5 shrink-0 text-ayu-fg" />
       <span className="text-ayu-fg/60">{t('ensocode.demo.dispatchedTo')}</span>
       <span className="font-medium text-ayu-fg">{name}</span>
     </div>
@@ -418,7 +559,7 @@ function TaskNoteRow({ text }: { text: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Bars above composer (GoalBar / TaskBar / ApprovalBar)
+// Bars above composer (ApprovalBar / GoalBar / TodoBar)
 // ---------------------------------------------------------------------------
 
 function DemoGoalBar({ text, turns, paused, onTogglePause, onClear }: {
@@ -447,17 +588,47 @@ function DemoGoalBar({ text, turns, paused, onTogglePause, onClear }: {
   );
 }
 
-function DemoTaskBar({ name, task }: { name: string; task?: string }) {
+function DemoTodoBar({ todos, onHide }: { todos: Todo[]; onHide: () => void }) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const done = todos.filter((todo) => todo.status === 'completed').length;
+  const current = todos.find((todo) => todo.status === 'in_progress') ?? todos.find((todo) => todo.status === 'pending');
   return (
-    <div className="mb-1 rounded-lg border border-ayu-line/60 bg-ayu-line/20">
-      <div className="flex items-center gap-2 px-2.5 py-1.5 text-xs">
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ayu-string animate-pulse" />
-        <Bot className="h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
-        <span className="min-w-0 flex-1 truncate text-ayu-fg/60">
-          <span className="mr-1 rounded border border-ayu-line bg-ayu-line/30 px-1 py-px text-[10px]">{name}</span>
-          {task}
-        </span>
+    <div className="mb-1 rounded-lg border border-ayu-line/60 bg-ayu-line/20 px-2.5 py-1.5 text-xs text-ayu-fg">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          <ListTodo className="h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
+          <span className="shrink-0 font-medium">{t('ensocode.demo.todos')}</span>
+          <span className="shrink-0 font-mono text-[10px] text-ayu-fg/60 tabular-nums">
+            {done}/{todos.length}
+          </span>
+          {!expanded && current && (
+            <span className="min-w-0 flex-1 truncate text-ayu-fg/60">{current.content}</span>
+          )}
+          {expanded ? (
+            <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
+          ) : (
+            <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
+          )}
+        </button>
+        <button
+          type="button"
+          title={t('ensocode.demo.todosHide')}
+          onClick={onHide}
+          className="shrink-0 rounded p-0.5 text-ayu-fg/60 transition-colors hover:text-ayu-fg"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
+      {expanded && (
+        <div className="mt-1.5 max-h-48 overflow-y-auto">
+          <TodoList todos={todos} />
+        </div>
+      )}
     </div>
   );
 }
@@ -534,6 +705,8 @@ function ChatArea({
   const [step, setStep] = useState(initialStep);
   const [goalPaused, setGoalPaused] = useState(false);
   const [goalCleared, setGoalCleared] = useState(false);
+  const [hiddenTodo, setHiddenTodo] = useState(-1);
+  const [expandedFolds, setExpandedFolds] = useState<Set<number>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const approvalIdx = script.findIndex((s) => s.type === 'approval');
@@ -565,14 +738,46 @@ function ChatArea({
 
   const visible = script
     .slice(0, step)
-    .filter((s) => !(s.skipIfRejected && approval === 'rejected'));
+    .map((s, idx) => ({ s, idx }))
+    .filter(({ s }) => !(s.skipIfRejected && approval === 'rejected'));
 
-  // Derived bars
-  const goalStep = visible.find((s) => s.type === 'goal');
-  const lastDispatch = [...visible].reverse().find((s) => s.type === 'dispatch' || s.type === 'agent-done');
-  const taskActive = lastDispatch?.type === 'dispatch' ? lastDispatch : null;
+  const goalStep = visible.find(({ s }) => s.type === 'goal')?.s;
+  const lastTodo = [...visible].reverse().find(({ s }) => s.toolContent?.kind === 'todos');
+  const pinnedTodos =
+    lastTodo?.s.toolContent?.kind === 'todos' &&
+    lastTodo.idx !== hiddenTodo &&
+    lastTodo.s.toolContent.items.some((todo) => todo.status !== 'completed')
+      ? lastTodo.s.toolContent.items
+      : null;
   const approvalStep = approvalIdx >= 0 && step > approvalIdx ? script[approvalIdx] : null;
   const running = step < script.length;
+
+  const rows = visible.filter(({ s }) => s.type !== 'goal' && s.type !== 'approval');
+  const liveFrom = running
+    ? rows.reduce((last, { s }, i) => (s.type === 'user' || s.type === 'text' ? i : last), -1)
+    : rows.length;
+  const foldable = (i: number) =>
+    i < liveFrom && ['thinking', 'tool', 'dispatch', 'agent-done', 'coworker'].includes(rows[i].s.type);
+  const items: ({ kind: 'row'; row: (typeof rows)[number]; done: boolean } | { kind: 'fold'; key: number; steps: Step[] })[] = [];
+  for (let i = 0; i < rows.length; ) {
+    let end = i;
+    while (end < rows.length && foldable(end)) end += 1;
+    if (end - i >= 2) {
+      const key = rows[i].idx;
+      items.push({ kind: 'fold', key, steps: rows.slice(i, end).map(({ s }) => s) });
+      if (expandedFolds.has(key)) items.push(...rows.slice(i, end).map((row) => ({ kind: 'row' as const, row, done: true })));
+      i = end;
+    } else {
+      items.push({ kind: 'row', row: rows[i], done: false });
+      i += 1;
+    }
+  }
+  const toggleFold = (key: number) =>
+    setExpandedFolds((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
 
   return (
     <>
@@ -587,24 +792,33 @@ function ChatArea({
           </div>
         </div>
 
-        {visible.map((s, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {s.type === 'user' && <UserBubble text={s.content!} />}
-            {s.type === 'thinking' && <ThinkingRow text={s.content!} live={!instant && i === visible.length - 1 && running} />}
-            {s.type === 'text' && <AgentText name={name} text={s.content!} />}
-            {s.type === 'tool' && <ToolRow step={s} instant={instant} />}
-            {s.type === 'dispatch' && <DispatchRow name={s.name!} />}
-            {s.type === 'agent-done' && <AgentDoneRow name={s.name!} result={s.result} />}
-            {s.type === 'coworker' && <DispatchRow name={s.name!} />}
-            {s.type === 'approval' && null /* rendered as ApprovalBar above composer */}
-            {s.type === 'tasknote' && <TaskNoteRow text={s.content!} />}
-          </motion.div>
-        ))}
+        {items.map((item) => {
+          if (item.kind === 'fold') {
+            return (
+              <motion.div key={`fold-${item.key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+                <FoldRow steps={item.steps} expanded={expandedFolds.has(item.key)} onToggle={() => toggleFold(item.key)} />
+              </motion.div>
+            );
+          }
+          const { s, idx } = item.row;
+          return (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {s.type === 'user' && <UserBubble text={s.content!} />}
+              {s.type === 'thinking' && <ThinkingRow text={s.content!} live={!instant && !item.done && idx === step - 1 && running} />}
+              {s.type === 'text' && <AgentText name={name} text={s.content!} />}
+              {s.type === 'tool' && <ToolRow step={s} instant={instant || item.done} />}
+              {s.type === 'dispatch' && <DispatchRow name={s.name!} task />}
+              {s.type === 'agent-done' && <AgentDoneRow name={s.name!} result={s.result} />}
+              {s.type === 'coworker' && <DispatchRow name={s.name!} />}
+              {s.type === 'tasknote' && <TaskNoteRow text={s.content!} />}
+            </motion.div>
+          );
+        })}
 
         {running && !waitingForApproval && (
           <div className="flex items-center gap-1.5 px-1">
@@ -617,7 +831,6 @@ function ChatArea({
 
       {/* Bars + composer */}
       <div className="shrink-0 px-3 pb-3 pt-1">
-        {taskActive && <DemoTaskBar name={taskActive.name!} task={taskActive.task} />}
         {approvalStep && (!approval || approval === 'pending') && onApproval && (
           <DemoApprovalBar command={approvalStep.command!} onRespond={onApproval} />
         )}
@@ -630,6 +843,7 @@ function ChatArea({
             onClear={() => setGoalCleared(true)}
           />
         )}
+        {pinnedTodos && <DemoTodoBar todos={pinnedTodos} onHide={() => setHiddenTodo(lastTodo!.idx)} />}
         <Composer model={model} running={running} />
       </div>
     </>
@@ -893,7 +1107,7 @@ function PhoneCompanion({
 export function EnsoCodeDemoPreview() {
   const { t } = useTranslation();
   const [activeSessionId, setActiveSessionId] = useState('cart');
-  const [viewingCoworker, setViewingCoworker] = useState(false);
+  const [viewingAgent, setViewingAgent] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [played, setPlayed] = useState<Set<string>>(new Set());
   const [approvals, setApprovals] = useState<Record<string, Approval>>({});
@@ -917,12 +1131,22 @@ export function EnsoCodeDemoPreview() {
   const isPlayed = played.has(activeSessionId);
   const currentStep = isPlayed ? activeSession.script.length : (progress[activeSessionId] ?? 0);
 
-  const coworkerKey = `${activeSessionId}:cw`;
-  const coworkerVisible = activeSession.script.slice(0, currentStep).some((s) => s.type === 'coworker');
-  const coworkerPlayed = played.has(coworkerKey);
-  const coworkerStep = coworkerPlayed
-    ? (activeSession.coworker?.script.length ?? 0)
-    : (progress[coworkerKey] ?? 0);
+  const agents = (activeSession.agents ?? [])
+    .filter((a) =>
+      activeSession.script
+        .slice(0, currentStep)
+        .some((s) => (s.type === 'dispatch' || s.type === 'coworker') && s.name === a.name),
+    )
+    .map((a) => {
+      const key = `${activeSessionId}:${a.name}`;
+      const done = played.has(key) || isPlayed;
+      return { ...a, key, done, step: done ? a.script.length : (progress[key] ?? 0) };
+    });
+  const tabClass = (active: boolean) =>
+    clsx(
+      'flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors cursor-pointer',
+      active ? 'bg-ayu-line/40 font-medium text-ayu-fg' : 'text-ayu-fg/60 hover:bg-ayu-line/20',
+    );
 
   const sessionStatus = (s: Session): 'running' | 'waiting' | 'done' => {
     if (played.has(s.id)) return 'done';
@@ -1000,7 +1224,7 @@ export function EnsoCodeDemoPreview() {
                         <button
                           key={s.id}
                           type="button"
-                          onClick={() => { setActiveSessionId(s.id); setViewingCoworker(false); }}
+                          onClick={() => { setActiveSessionId(s.id); setViewingAgent(null); }}
                           className={clsx(
                             'group flex cursor-pointer items-center gap-2 rounded-lg py-1.5 pr-2 pl-8 text-xs transition-colors w-full text-left',
                             active
@@ -1036,54 +1260,42 @@ export function EnsoCodeDemoPreview() {
 
           {/* Main column */}
           <div className="flex-1 flex flex-col min-w-0">
-            {/* Chat header: session tab + coworker tab + hire */}
-            <div className="flex items-center gap-1 border-b border-ayu-line px-2 py-1.5">
-              <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-                <button
-                  type="button"
-                  onClick={() => setViewingCoworker(false)}
-                  className={clsx(
-                    'flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors cursor-pointer',
-                    !viewingCoworker ? 'bg-ayu-line/40 font-medium text-ayu-fg' : 'text-ayu-fg/60 hover:bg-ayu-line/20',
-                  )}
-                >
-                  <span className="truncate">{activeSession.title}</span>
+            {/* Chat header: session tab + child agent tabs + hire + project badge */}
+            <div className="flex items-center gap-1 border-b border-ayu-line px-2 py-1">
+              <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]">
+                <button type="button" onClick={() => setViewingAgent(null)} className={tabClass(viewingAgent === null)}>
+                  <MessageCircle className="h-3 w-3 shrink-0" />
+                  <span className="max-w-48 truncate">{activeSession.title}</span>
                 </button>
-                {coworkerVisible && activeSession.coworker && (
-                  <button
-                    type="button"
-                    onClick={() => setViewingCoworker(true)}
-                    className={clsx(
-                      'flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors cursor-pointer',
-                      viewingCoworker ? 'bg-ayu-line/40 font-medium text-ayu-fg' : 'text-ayu-fg/60 hover:bg-ayu-line/20',
-                    )}
-                  >
-                    <Bot className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{activeSession.coworker.name}</span>
-                    <span
-                      className={clsx(
-                        'h-1.5 w-1.5 shrink-0 rounded-full',
-                        coworkerPlayed ? 'bg-ayu-fg/30' : 'bg-ayu-accent animate-pulse',
-                      )}
-                    />
+                {agents.map((a) => (
+                  <button key={a.key} type="button" onClick={() => setViewingAgent(a.name)} className={tabClass(viewingAgent === a.name)}>
+                    {a.mode === 'task' ? <Zap className="h-3 w-3 shrink-0" /> : <Bot className="h-3 w-3 shrink-0" />}
+                    <span className="max-w-48 truncate">{a.name}</span>
+                    <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center">
+                      <StatusDot running={!a.done} />
+                    </span>
                   </button>
-                )}
+                ))}
                 <button
                   type="button"
                   title={t('ensocode.demo.hire')}
-                  className="shrink-0 rounded-md p-1 text-ayu-fg/60 hover:bg-ayu-line/20 hover:text-ayu-fg"
+                  className="shrink-0 rounded p-1 text-ayu-fg/60 transition-colors hover:bg-ayu-line/40 hover:text-ayu-fg"
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <span className="hidden xl:flex shrink-0 items-center gap-1.5 font-mono text-[10px] text-ayu-fg/40 max-w-48 truncate">
-                {activeRepo.name} · {activeRepo.branch}
-                <span className={clsx('h-1.5 w-1.5 rounded-full', isPlayed ? 'bg-ayu-fg/30' : 'bg-ayu-string animate-pulse')} />
-              </span>
+              <div className="ml-1.5 hidden h-6 min-w-0 shrink-0 items-center gap-1.5 rounded-full border border-ayu-line px-2 font-mono text-[11.5px] text-ayu-fg/60 sm:flex">
+                <Folder className="h-3 w-3 shrink-0" />
+                <span className="max-w-40 truncate">{activeRepo.name}</span>
+                <span className="opacity-40">/</span>
+                <GitBranch className="h-3 w-3 shrink-0" />
+                <span className="max-w-40 truncate">{activeRepo.branch}</span>
+                <StatusDot running={!isPlayed || agents.some((a) => !a.done)} />
+              </div>
             </div>
 
             {/* Main session view */}
-            <div className={clsx('flex-1 flex flex-col min-h-0', viewingCoworker && 'hidden')}>
+            <div className={clsx('flex-1 flex flex-col min-h-0', viewingAgent !== null && 'hidden')}>
               <ChatArea
                 key={activeSessionId}
                 name="EnsoCode"
@@ -1098,21 +1310,20 @@ export function EnsoCodeDemoPreview() {
               />
             </div>
 
-            {/* Coworker view — mounts when dispatched, keeps running in background */}
-            {coworkerVisible && activeSession.coworker && (
-              <div className={clsx('flex-1 flex flex-col min-h-0', !viewingCoworker && 'hidden')}>
+            {/* Child agent views — mount when dispatched, keep running in background */}
+            {agents.map((a) => (
+              <div key={a.key} className={clsx('flex-1 flex flex-col min-h-0', viewingAgent !== a.name && 'hidden')}>
                 <ChatArea
-                  key={coworkerKey}
-                  name={activeSession.coworker.name}
+                  name={a.name}
                   model={activeSession.model}
-                  script={activeSession.coworker.script}
-                  initialStep={coworkerStep}
-                  instant={coworkerPlayed}
-                  onProgress={(step) => handleProgress(coworkerKey, step)}
-                  onComplete={() => handleComplete(coworkerKey)}
+                  script={a.script}
+                  initialStep={a.step}
+                  instant={a.done}
+                  onProgress={(step) => handleProgress(a.key, step)}
+                  onComplete={() => handleComplete(a.key)}
                 />
               </div>
-            )}
+            ))}
           </div>
         </div>
       </div>

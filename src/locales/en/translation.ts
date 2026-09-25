@@ -85,11 +85,21 @@ export default {
         coworker: "Coworker",
         dispatchedTo: "Dispatched to",
         completed: "Completed",
+        todos: "Todos",
+        todosHide: "Hide until the todo list updates",
+        fold: {
+          worked: "Worked for {{duration}}",
+          thinking_one: "{{count}} thinking step",
+          thinking: "{{count}} thinking steps",
+          tools_one: "{{count}} tool call",
+          tools: "{{count}} tool calls"
+        },
         tools: {
           read: "Read file",
           bash: "Run command",
           search: "Search",
-          edit: "Edit file"
+          edit: "Edit file",
+          todo: "Update todos"
         },
         approval: {
           title: "Approval required",
