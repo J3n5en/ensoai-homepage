@@ -1,4 +1,9 @@
 /** @type {import('tailwindcss').Config} */
+// ayu-* tokens are plain var() strings, so Tailwind drops their /opacity modifiers;
+// ayu-a-* are alpha-capable aliases of the same theme variables.
+const ayuAlpha = (name) =>
+  `color-mix(in srgb, var(--ayu-${name}) calc(<alpha-value> * 100%), transparent)`;
+
 export default {
   content: [
     "./index.html",
@@ -69,7 +74,10 @@ export default {
           
           selection: 'var(--ayu-selection)',
           'selection-text': 'var(--ayu-selection-text)',
-        }
+        },
+        'ayu-a': Object.fromEntries(
+          ['bg', 'fg', 'accent', 'line', 'panel', 'red', 'green', 'yellow'].map((name) => [name, ayuAlpha(name)]),
+        ),
       },
       boxShadow: {
         'glass': '0 4px 30px rgba(0, 0, 0, 0.05)',

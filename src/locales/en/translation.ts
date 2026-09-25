@@ -73,57 +73,50 @@ export default {
         tagline: "One developer. An entire fleet of autonomous coding agents."
       },
       demo: {
-        search: "Search conversations…",
-        repos: "{{count}} repos",
-        sessions: "{{count}} sessions",
+        search: "Search conversations...",
+        thisComputer: "This computer",
+        active: "Active",
         hire: "Hire coworker",
         thinking: "Thinking…",
-        goal: "Goal",
+        thought: "Thought for {{duration}}",
+        generating: "Working…",
         working: "working",
         paused: "paused",
-        subagent: "Subagent",
-        coworker: "Coworker",
-        dispatchedTo: "Dispatched to",
-        completed: "Completed",
         todos: "Todos",
         todosHide: "Hide until the todo list updates",
         fold: {
           worked: "Worked for {{duration}}",
           thinking_one: "{{count}} thinking step",
-          thinking: "{{count}} thinking steps",
+          thinking_other: "{{count}} thinking steps",
           tools_one: "{{count}} tool call",
-          tools: "{{count}} tool calls"
+          tools_other: "{{count}} tool calls"
         },
         tools: {
-          read: "Read file",
-          bash: "Run command",
-          search: "Search",
-          edit: "Edit file",
-          todo: "Update todos"
+          read: "read",
+          bash: "bash",
+          search: "grep",
+          edit: "Apply patch",
+          subagent: "subagent"
         },
         approval: {
           title: "Approval required",
           allow: "Allow",
           deny: "Deny",
-          allowSession: "Always allow this session",
-          approve: "Approve",
-          reject: "Reject",
-          approved: "Approved",
-          rejected: "Rejected"
+          allowSession: "Always allow this session"
         },
         modes: {
-          full: "Full Approval",
-          auto: "Auto Accept",
-          access: "Full Access"
+          full: "Supervised",
+          auto: "Auto-accept edits",
+          access: "Full access"
         },
         modesHint: "Click to cycle approval modes",
-        composer: "Type a message…",
-        phone: {
-          desktop: "Desktop",
-          thinking: "Thinking…",
-          done: "Done",
-          coworkerTask: "Working in its own tab",
-          composer: "Type a message…"
+        global: "Global",
+        local: "Local",
+        med: "Med",
+        composer: {
+          idle: "Type @ to choose a file or Agent",
+          running: "Message will queue until this round finishes…",
+          locked: "Resolve the pending approval to continue"
         }
       }
     },

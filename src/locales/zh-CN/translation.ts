@@ -73,18 +73,15 @@ export default {
         tagline: "一个人，带一队 Coding Agent。"
       },
       demo: {
-        search: "搜索会话",
-        repos: "{{count}} 个仓库",
-        sessions: "{{count}} 个会话",
-        hire: "雇用 Coworker",
+        search: "搜索会话...",
+        thisComputer: "本机",
+        active: "活跃中",
+        hire: "雇佣 coworker",
         thinking: "思考中…",
-        goal: "目标",
+        thought: "思考了 {{duration}}",
+        generating: "生成中…",
         working: "工作中",
         paused: "已暂停",
-        subagent: "子代理",
-        coworker: "数字同事",
-        dispatchedTo: "已派发给",
-        completed: "已完成",
         todos: "任务清单",
         todosHide: "隐藏，清单更新后再显示",
         fold: {
@@ -93,35 +90,31 @@ export default {
           tools: "{{count}} 个工具调用"
         },
         tools: {
-          read: "读取文件",
-          bash: "运行命令",
-          search: "搜索",
-          edit: "编辑文件",
-          todo: "更新待办"
+          read: "read",
+          bash: "bash",
+          search: "grep",
+          edit: "应用补丁",
+          subagent: "subagent"
         },
         approval: {
           title: "需要审批",
           allow: "允许",
           deny: "拒绝",
-          allowSession: "本会话始终允许",
-          approve: "批准",
-          reject: "拒绝",
-          approved: "已批准",
-          rejected: "已拒绝"
+          allowSession: "本会话总是允许"
         },
         modes: {
-          full: "逐项审批",
-          auto: "自动接受",
+          full: "全程审批",
+          auto: "自动接受编辑",
           access: "完全放行"
         },
         modesHint: "点击切换审批档位",
-        composer: "继续输入…",
-        phone: {
-          desktop: "桌面端",
-          thinking: "思考中…",
-          done: "完成",
-          coworkerTask: "在专属 Tab 中工作",
-          composer: "继续输入…"
+        global: "全局",
+        local: "本地",
+        med: "中",
+        composer: {
+          idle: "输入 @ 选择文件或 Agent",
+          running: "消息将排队,本轮结束后发送…",
+          locked: "请先处理待审批的操作"
         }
       }
     },

@@ -3,39 +3,52 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowUp,
+  BatteryFull,
   Bot,
   Brain,
   Check,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
   Circle,
   CircleDot,
   CircleStop,
+  Coins,
+  Cpu,
+  Database,
+  FileText,
   Folder,
+  FolderOpen,
   GitBranch,
-  History,
+  GitCompare,
+  House,
+  ImagePlus,
+  Laptop,
   Layers,
-  ListFilter,
   ListTodo,
-  Loader2,
-  Lock,
   MessageCircle,
-  Mic,
-  Paperclip,
+  PanelLeft,
+  PanelLeftClose,
+  PanelRight,
   Pause,
+  Pencil,
   Play,
   Plus,
-  RefreshCw,
   Search,
-  Send,
+  Settings,
+  Shield,
   ShieldAlert,
-  SlidersHorizontal,
+  ShieldCheck,
+  ShieldOff,
+  Signal,
+  Sparkles,
+  SquarePen,
   Target,
   TerminalSquare,
-  Wifi,
+  TextSearch,
+  UnfoldHorizontal,
   X,
   Zap,
+  type LucideIcon,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -91,6 +104,8 @@ interface Session {
   id: string;
   title: string;
   model: string;
+  /** minutes since last activity, for the sidebar's relative time */
+  ago: number;
   script: Step[];
   agents?: ChildAgent[];
 }
@@ -134,7 +149,8 @@ const repos: Repo[] = [
       {
         id: 'cart',
         title: 'Cart discount logic',
-        model: 'Opus 4.5',
+        model: 'claude-opus-4-5',
+        ago: 1,
         script: [
           { type: 'user', gap: 900, content: 'Cart needs the second-item-half-price promo before Friday\'s campaign.' },
           { type: 'thinking', gap: 1300, content: 'Decomposing the task, planning agent dispatch…' },
@@ -200,7 +216,8 @@ const repos: Repo[] = [
       {
         id: 'i18n',
         title: 'Checkout i18n',
-        model: 'Gemini 3',
+        model: 'gemini-3-pro',
+        ago: 19,
         script: [
           { type: 'user', gap: 900, content: 'Extract checkout page copy into locale files.' },
           {
@@ -221,7 +238,8 @@ const repos: Repo[] = [
       {
         id: 'db',
         title: 'Slow query: orders',
-        model: 'GPT-5.2 Codex',
+        model: 'gpt-5.2-codex',
+        ago: 19,
         script: [
           { type: 'user', gap: 900, content: 'The orders table slow query alert is firing again.' },
           { type: 'coworker', gap: 1600, name: 'db-detective' },
@@ -269,7 +287,8 @@ const repos: Repo[] = [
       {
         id: 'buttons',
         title: 'Button padding',
-        model: 'Sonnet 4.5',
+        model: 'claude-sonnet-4-5',
+        ago: 19,
         script: [
           { type: 'user', gap: 900, content: 'Unify button paddings across the kit.' },
           {
@@ -297,20 +316,52 @@ const repos: Repo[] = [
 ];
 
 const approvalModes = [
-  { key: 'full' },
-  { key: 'auto' },
-  { key: 'access' },
+  { key: 'full', icon: ShieldCheck },
+  { key: 'auto', icon: Shield },
+  { key: 'access', icon: ShieldOff },
 ] as const;
 
+
 // ---------------------------------------------------------------------------
-// Shared bits
+// Shared bits — visuals mirror the enso-code renderer. ayu-a-* are the
+// alpha-capable aliases of the site's ayu-* theme variables.
 // ---------------------------------------------------------------------------
 
-function AgentAvatar({ className }: { className?: string }) {
+/** Timeline / dock column, kept narrow enough that the phone overlay never covers it */
+const CHAT_COL = 'mx-auto w-full max-w-[560px] px-4 min-[1400px]:max-w-[640px]';
+const BORDER = 'border-ayu-a-fg/[.12]';
+const DEMO_CLOCK = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+const TOOL_ICONS: Record<NonNullable<Step['tool']>, LucideIcon> = {
+  read: FileText,
+  bash: TerminalSquare,
+  edit: Pencil,
+  search: Search,
+  todo: ListTodo,
+};
+
+function formatDuration(ms: number) {
+  const s = ms / 1000;
+  if (s < 60) return `${Math.round(s * 10) / 10}s`;
+  const whole = Math.round(s);
+  return `${Math.floor(whole / 60)}m${whole % 60}s`;
+}
+
+const formatElapsed = (sec: number) => (sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}m${sec % 60}s`);
+
+const sumGaps = (script: Step[], from: number, to: number) =>
+  script.slice(from, to).reduce((ms, s) => ms + s.gap, 0);
+
+function EnsoMark({ className }: { className?: string }) {
   return (
-    <div className={clsx('shrink-0 rounded-md bg-ayu-line/50 flex items-center justify-center', className)}>
-      <Bot className="w-[60%] h-[60%] text-ayu-fg/60" />
-    </div>
+    <svg viewBox="0 0 64 64" fill="none" className={className} aria-hidden>
+      <path
+        d="M 38.96 48.86 A 18.24 18.24 0 1 1 48.19 40.4"
+        stroke="currentColor"
+        strokeWidth={8.32}
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -319,9 +370,25 @@ function StatusDot({ running }: { running: boolean }) {
     <span
       className={clsx(
         'size-2 shrink-0 rounded-full',
-        running ? 'animate-pulse bg-ayu-accent' : 'border border-ayu-fg/50',
+        running ? 'animate-pulse bg-ayu-accent' : 'border border-ayu-a-fg/50',
       )}
     />
+  );
+}
+
+function StepNode({ icon: Icon, running }: { icon: LucideIcon; running: boolean }) {
+  return (
+    <span
+      className={clsx(
+        'relative flex size-[22px] shrink-0 items-center justify-center rounded-full border',
+        running ? 'border-transparent text-ayu-accent' : `${BORDER} text-ayu-a-fg/60`,
+      )}
+    >
+      <Icon className="size-3" />
+      {running && (
+        <span className="absolute -inset-px animate-spin rounded-full border-[1.5px] border-ayu-a-accent/20 border-t-ayu-accent" />
+      )}
+    </span>
   );
 }
 
@@ -331,15 +398,31 @@ function StatusDot({ running }: { running: boolean }) {
 
 function UserBubble({ text }: { text: string }) {
   return (
-    <div className="flex flex-col items-end">
-      <div className="max-w-[80%] rounded-2xl rounded-br-md bg-ayu-accent px-4 py-2.5 text-sm text-white">
+    <div className="flex flex-col items-end gap-1.5">
+      <div className="max-w-[80%] rounded-2xl rounded-br-md border border-ayu-a-accent/15 bg-ayu-a-accent/[.08] px-4 py-2.5 text-sm text-ayu-fg">
         {text}
       </div>
+      <span className="text-[11px] text-ayu-a-fg/50 tabular-nums">{DEMO_CLOCK}</span>
     </div>
   );
 }
 
-function ThinkingRow({ text, live }: { text: string; live: boolean }) {
+function ReplyHeader({ name, model }: { name: string; model: string }) {
+  return (
+    <div className="mb-2 flex h-6 min-w-0 items-center gap-2 text-xs select-none">
+      <span className="flex size-[22px] shrink-0 items-center justify-center rounded-[7px] border border-ayu-a-accent/20 bg-ayu-a-accent/[.08] text-ayu-accent">
+        <EnsoMark className="size-3.5" />
+      </span>
+      <span className="shrink-0 text-[13px] font-semibold text-ayu-fg">{name}</span>
+      <span className="min-w-0 truncate rounded-md bg-ayu-a-fg/[.06] px-1.5 py-0.5 font-mono text-[11px] text-ayu-a-fg/60">
+        {model}
+      </span>
+      <span className="shrink-0 text-[11px] text-ayu-a-fg/60 tabular-nums">{DEMO_CLOCK}</span>
+    </div>
+  );
+}
+
+function ThinkingRow({ text, live, ms }: { text: string; live: boolean; ms: number }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   return (
@@ -347,14 +430,18 @@ function ThinkingRow({ text, live }: { text: string; live: boolean }) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1.5 text-xs text-ayu-fg/60 transition-colors hover:text-ayu-fg"
+        className="flex min-h-[26px] items-center gap-2 text-left text-[13px] text-ayu-a-fg/60 transition-colors hover:text-ayu-fg"
       >
-        <Brain className={clsx('h-3.5 w-3.5', live && 'animate-pulse')} />
-        <span>{t('ensocode.demo.thinking')}</span>
-        <ChevronRight className={clsx('h-3 w-3 transition-transform', expanded && 'rotate-90')} />
+        <span className="flex size-[22px] shrink-0 items-center justify-center">
+          <Brain className={clsx('h-3.5 w-3.5', live && 'animate-pulse text-ayu-accent')} />
+        </span>
+        <span className={clsx(live && 'animate-pulse')}>
+          {live ? t('ensocode.demo.thinking') : t('ensocode.demo.thought', { duration: formatDuration(ms) })}
+        </span>
+        <ChevronRight className={clsx('h-3 w-3 shrink-0 transition-transform', expanded && 'rotate-90')} />
       </button>
       {expanded && (
-        <p className="mt-1.5 border-l-2 border-ayu-line pl-3 text-xs leading-relaxed text-ayu-fg/60">
+        <p className={clsx('mt-1 ml-[10px] border-l-2 py-0.5 pl-[19px] text-[13px] leading-relaxed text-ayu-a-fg/60', BORDER)}>
           {text}
         </p>
       )}
@@ -362,99 +449,176 @@ function ThinkingRow({ text, live }: { text: string; live: boolean }) {
   );
 }
 
-function AgentText({ name, text }: { name: string; text: string }) {
+/** file names and call-like identifiers render as inline code, paths as file links */
+const CODE_RE = /([\w./-]*\w\.(?:tsx?|sql)\b|\w+\([\w, ]+\))/g;
+
+function AgentText({ text }: { text: string }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <AgentAvatar className="w-6 h-6 mt-0.5" />
-      <div className="min-w-0">
-        <span className="text-xs font-semibold text-ayu-fg">{name}</span>
-        <p className="text-sm text-ayu-fg/80 leading-relaxed mt-0.5">{text}</p>
+    <p className="text-sm leading-relaxed text-ayu-fg">
+      {text.split(CODE_RE).map((part, i) =>
+        i % 2 === 0 ? (
+          part
+        ) : (
+          <code
+            key={i}
+            className={clsx(
+              'rounded border border-ayu-a-fg/[.08] bg-ayu-a-fg/[.05] px-1 py-px font-mono text-[0.85em]',
+              part.includes('/') && 'text-ayu-accent',
+            )}
+          >
+            {part}
+          </code>
+        ),
+      )}
+    </p>
+  );
+}
+
+/** A timeline step: round icon node + name + mono summary + duration, expandable into a card */
+function StepRow({
+  icon,
+  label,
+  summary,
+  running,
+  meta,
+  bold = true,
+  diff = false,
+  defaultOpen = false,
+  content,
+}: {
+  icon: LucideIcon;
+  label: string;
+  summary?: string;
+  running: boolean;
+  meta?: string;
+  bold?: boolean;
+  diff?: boolean;
+  defaultOpen?: boolean;
+  content?: ReactNode;
+}) {
+  const [expanded, setExpanded] = useState(defaultOpen);
+  const expandable = Boolean(content);
+  return (
+    <div>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          disabled={!expandable}
+          onClick={() => setExpanded((v) => !v)}
+          className={clsx(
+            'group/step flex min-h-[30px] min-w-0 flex-1 items-center gap-2 rounded-lg pr-1.5 text-left text-[13px] text-ayu-fg transition-colors',
+            expandable && 'cursor-pointer hover:bg-ayu-a-fg/[.05]',
+          )}
+        >
+          <StepNode icon={icon} running={running} />
+          <span className={clsx('shrink-0', bold ? 'font-medium' : 'text-ayu-a-fg/80')}>{label}</span>
+          <span className="min-w-0 flex-1 truncate font-mono text-xs text-ayu-a-fg/60">{summary}</span>
+          {meta && <span className="shrink-0 font-mono text-[10px] text-ayu-a-fg/45 tabular-nums">{meta}</span>}
+          {expandable && (
+            <ChevronRight
+              className={clsx(
+                'h-3 w-3 shrink-0 text-ayu-a-fg/60 opacity-0 transition-[opacity,transform] group-hover/step:opacity-100',
+                expanded && 'rotate-90 opacity-100',
+              )}
+            />
+          )}
+        </button>
+        {diff && !running && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex size-6 shrink-0 items-center justify-center rounded-md text-ayu-a-fg/60 transition-colors hover:bg-ayu-a-fg/[.06] hover:text-ayu-fg"
+          >
+            <GitCompare className="h-3 w-3" />
+          </button>
+        )}
       </div>
+      {expanded && content && (
+        <div className={clsx('mt-1 mb-1.5 ml-[30px] overflow-hidden rounded-lg border bg-ayu-panel shadow-sm', BORDER)}>
+          {content}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ToolContentView({ content }: { content: Exclude<ToolContent, { kind: 'todos' }> }) {
+  if (content.kind === 'output') {
+    return (
+      <pre className="px-3 py-2 font-mono text-xs leading-relaxed text-ayu-a-fg/60 whitespace-pre-wrap">{content.text}</pre>
+    );
+  }
+  if (content.kind === 'file') {
+    return (
+      <div className="py-1 font-mono text-[11px] leading-relaxed">
+        {content.lines.map((l, i) => (
+          <div key={i} className="px-3 whitespace-pre-wrap text-ayu-a-fg/80">
+            <span className="mr-3 inline-block w-6 text-right text-ayu-a-fg/35 select-none">{i + 1}</span>
+            {l}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="py-1 font-mono text-[11px] leading-relaxed">
+      {content.lines.map((l, i) => (
+        <div
+          key={i}
+          className={clsx(
+            'px-3 whitespace-pre-wrap',
+            l.kind === 'add' && 'bg-ayu-a-green/10 text-ayu-green',
+            l.kind === 'del' && 'bg-ayu-a-red/10 text-ayu-red',
+            l.kind === 'ctx' && 'text-ayu-a-fg/60',
+          )}
+        >
+          {l.kind === 'add' ? '+ ' : l.kind === 'del' ? '- ' : '  '}
+          {l.text}
+        </div>
+      ))}
     </div>
   );
 }
 
 function ToolRow({ step, instant }: { step: Step; instant: boolean }) {
   const { t } = useTranslation();
-  const [state, setState] = useState<'running' | 'ok'>(instant ? 'ok' : 'running');
-  const [expanded, setExpanded] = useState(!instant && step.toolContent?.kind === 'diff');
+  const [running, setRunning] = useState(!instant);
 
   useEffect(() => {
     if (instant) return;
-    const timer = setTimeout(() => setState('ok'), 900);
+    const timer = setTimeout(() => setRunning(false), 900);
     return () => clearTimeout(timer);
   }, [instant]);
 
-  const expandable = Boolean(step.toolContent);
-
+  const content = step.toolContent;
+  if (content?.kind === 'todos') return <TodoCard todos={content.items} />;
+  const tool = step.tool!;
   return (
-    <div className="rounded-lg border border-ayu-line/60 bg-ayu-line/20">
-      <button
-        type="button"
-        disabled={!expandable}
-        onClick={() => setExpanded((v) => !v)}
-        className={clsx(
-          'flex min-w-0 w-full flex-1 items-center gap-2 px-3 py-1.5 text-left text-xs',
-          expandable && 'cursor-pointer hover:bg-ayu-line/30',
-        )}
-      >
-        {state === 'running' ? (
-          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-ayu-fg/60" />
-        ) : (
-          <Check className="h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
-        )}
-        <span className="shrink-0 font-medium text-ayu-fg">{t(`ensocode.demo.tools.${step.tool}`)}</span>
-        <span className="text-ayu-fg/40">·</span>
-        <span className="min-w-0 flex-1 truncate font-mono text-ayu-fg/60">{step.target}</span>
-        {state === 'ok' && step.duration && (
-          <span className="shrink-0 font-mono text-[10px] text-ayu-fg/50 tabular-nums">{step.duration}</span>
-        )}
-        {expandable && (
-          <ChevronRight className={clsx('h-3 w-3 shrink-0 text-ayu-fg/60 transition-transform', expanded && 'rotate-90')} />
-        )}
-      </button>
-      {expanded && step.toolContent && (
-        <div className="rounded-b-lg border-t border-ayu-line/60">
-          {step.toolContent.kind === 'diff' && (
-            <div className="font-mono text-[11px] leading-relaxed py-1">
-              {step.toolContent.lines.map((l, i) => (
-                <div
-                  key={i}
-                  className={clsx(
-                    'px-3 whitespace-pre-wrap',
-                    l.kind === 'add' && 'bg-ayu-string/10 text-ayu-string',
-                    l.kind === 'del' && 'bg-ayu-tag/10 text-ayu-tag',
-                    l.kind === 'ctx' && 'text-ayu-fg/60',
-                  )}
-                >
-                  {l.kind === 'add' ? '+ ' : l.kind === 'del' ? '- ' : '  '}{l.text}
-                </div>
-              ))}
-            </div>
-          )}
-          {step.toolContent.kind === 'output' && (
-            <pre className="px-3 py-2 font-mono text-[11px] leading-relaxed text-ayu-fg/60 whitespace-pre-wrap">
-              {step.toolContent.text}
-            </pre>
-          )}
-          {step.toolContent.kind === 'file' && (
-            <div className="font-mono text-[11px] leading-relaxed py-1">
-              {step.toolContent.lines.map((l, i) => (
-                <div key={i} className="px-3 whitespace-pre-wrap text-ayu-fg/70">
-                  <span className="inline-block w-6 text-right mr-3 text-ayu-fg/30 select-none">{i + 1}</span>
-                  {l}
-                </div>
-              ))}
-            </div>
-          )}
-          {step.toolContent.kind === 'todos' && (
-            <div className="px-3 py-2">
-              <TodoList todos={step.toolContent.items} />
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+    <StepRow
+      icon={TOOL_ICONS[tool]}
+      label={t(`ensocode.demo.tools.${tool}`)}
+      summary={step.target}
+      running={running}
+      meta={running ? undefined : step.duration}
+      bold={tool !== 'read' && tool !== 'search'}
+      diff={content?.kind === 'diff'}
+      defaultOpen={!instant && content?.kind === 'diff'}
+      content={content && <ToolContentView content={content} />}
+    />
+  );
+}
+
+function SubagentRow({ summary, result, ms }: { summary: string; result?: string; ms?: number }) {
+  const { t } = useTranslation();
+  return (
+    <StepRow
+      icon={Bot}
+      label={t('ensocode.demo.tools.subagent')}
+      summary={summary}
+      running={result === undefined}
+      meta={ms === undefined ? undefined : formatDuration(ms)}
+      content={result && <p className="px-3 py-2 text-[13px] leading-relaxed text-ayu-fg">{result}</p>}
+    />
   );
 }
 
@@ -464,19 +628,19 @@ function TodoList({ todos }: { todos: Todo[] }) {
       {todos.map((todo) => (
         <li key={todo.content} className="flex items-start gap-1.5">
           {todo.status === 'completed' ? (
-            <Check className="mt-0.5 h-3 w-3 shrink-0 text-ayu-string" />
+            <Check className="mt-0.5 h-3 w-3 shrink-0 text-ayu-green" />
           ) : todo.status === 'in_progress' ? (
             <CircleDot className="mt-0.5 h-3 w-3 shrink-0 text-ayu-accent" />
           ) : (
-            <Circle className="mt-0.5 h-3 w-3 shrink-0 text-ayu-fg/30" />
+            <Circle className="mt-0.5 h-3 w-3 shrink-0 text-ayu-a-fg/35" />
           )}
           <span
             className={clsx(
               todo.status === 'completed'
-                ? 'text-ayu-fg/60 line-through'
+                ? 'text-ayu-a-fg/60 line-through'
                 : todo.status === 'in_progress'
                   ? 'font-medium text-ayu-fg'
-                  : 'text-ayu-fg/60',
+                  : 'text-ayu-a-fg/60',
             )}
           >
             {todo.content}
@@ -487,17 +651,27 @@ function TodoList({ todos }: { todos: Todo[] }) {
   );
 }
 
-function formatDuration(ms: number) {
-  const s = ms / 1000;
-  if (s < 60) return `${Math.round(s * 10) / 10}s`;
-  const whole = Math.round(s);
-  return `${Math.floor(whole / 60)}m${whole % 60}s`;
+function TodoCard({ todos }: { todos: Todo[] }) {
+  const { t } = useTranslation();
+  const done = todos.filter((todo) => todo.status === 'completed').length;
+  return (
+    <div className={clsx('rounded-lg border bg-ayu-a-fg/[.025] px-3 py-2', BORDER)}>
+      <div className="mb-1 flex items-center gap-2 text-xs text-ayu-a-fg/60">
+        <ListTodo className="h-3.5 w-3.5 shrink-0" />
+        <span className="font-medium">{t('ensocode.demo.todos')}</span>
+        <span>
+          {done}/{todos.length}
+        </span>
+      </div>
+      <TodoList todos={todos} />
+    </div>
+  );
 }
 
-function FoldRow({ steps, expanded, onToggle }: { steps: Step[]; expanded: boolean; onToggle: () => void }) {
+function FoldRow({ steps, ms, expanded, onToggle }: { steps: Step[]; ms: number; expanded: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
   const thinking = steps.filter((s) => s.type === 'thinking').length;
-  const tools = steps.filter((s) => s.type !== 'thinking' && s.type !== 'agent-done').length;
+  const tools = steps.length - thinking;
   const parts = [
     thinking > 0 && t('ensocode.demo.fold.thinking', { count: thinking }),
     tools > 0 && t('ensocode.demo.fold.tools', { count: tools }),
@@ -506,54 +680,199 @@ function FoldRow({ steps, expanded, onToggle }: { steps: Step[]; expanded: boole
     <button
       type="button"
       onClick={onToggle}
-      className="flex min-h-[30px] w-full items-center gap-2 rounded-lg pr-1.5 text-left text-[13px] text-ayu-fg/60 transition-colors hover:bg-ayu-line/30 hover:text-ayu-fg"
+      className="group/step flex min-h-[30px] w-full items-center gap-2 rounded-lg pr-1.5 text-left text-[13px] transition-colors hover:bg-ayu-a-fg/[.05]"
     >
-      <span className="flex size-[22px] shrink-0 items-center justify-center rounded-full border border-ayu-line">
-        <Layers className="size-3" />
+      <StepNode icon={Layers} running={false} />
+      <span className="shrink-0 font-medium text-ayu-a-fg/90">
+        {t('ensocode.demo.fold.worked', { duration: formatDuration(ms) })}
       </span>
-      <span className="shrink-0 font-medium text-ayu-fg/90">
-        {t('ensocode.demo.fold.worked', { duration: formatDuration(steps.reduce((ms, s) => ms + s.gap, 0)) })}
-      </span>
-      <span className="min-w-0 flex-1 truncate">{parts.join(' · ')}</span>
-      <ChevronRight className={clsx('h-3 w-3 shrink-0 transition-transform', expanded && 'rotate-90')} />
+      <span className="min-w-0 flex-1 truncate text-ayu-a-fg/60">{parts.join(' · ')}</span>
+      <ChevronRight className={clsx('h-3 w-3 shrink-0 text-ayu-a-fg/60 transition-transform', expanded && 'rotate-90')} />
     </button>
-  );
-}
-
-function DispatchRow({ name, task }: { name: string; task?: boolean }) {
-  const { t } = useTranslation();
-  const Icon = task ? Zap : Bot;
-  return (
-    <div className="flex items-center gap-2 rounded-md border border-ayu-line/60 bg-ayu-line/20 px-2.5 py-2 text-xs">
-      <Icon className="h-3.5 w-3.5 shrink-0 text-ayu-fg" />
-      <span className="text-ayu-fg/60">{t('ensocode.demo.dispatchedTo')}</span>
-      <span className="font-medium text-ayu-fg">{name}</span>
-    </div>
-  );
-}
-
-function AgentDoneRow({ name, result }: { name: string; result?: string }) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex items-start gap-2 rounded-md border border-ayu-string/30 bg-ayu-string/5 px-2.5 py-2 text-xs">
-      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ayu-string" />
-      <div className="min-w-0">
-        <p className="font-medium text-ayu-fg">{name} · {t('ensocode.demo.completed')}</p>
-        {result && <p className="mt-0.5 text-ayu-fg/60">{result}</p>}
-      </div>
-    </div>
   );
 }
 
 function TaskNoteRow({ text }: { text: string }) {
   return (
     <div className="flex w-full items-center gap-3">
-      <span className="h-px flex-1 bg-ayu-line" />
-      <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-ayu-fg/60">
-        <Check className="h-3 w-3 text-ayu-string" />
+      <span className="h-px flex-1 bg-ayu-a-fg/[.12]" />
+      <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-ayu-a-fg/60">
+        <Check className="h-3 w-3 text-ayu-green" />
         {text}
       </span>
-      <span className="h-px flex-1 bg-ayu-line" />
+      <span className="h-px flex-1 bg-ayu-a-fg/[.12]" />
+    </div>
+  );
+}
+
+function Elapsed() {
+  const [sec, setSec] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setSec((s) => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  return <span className="font-mono text-[11px] text-ayu-a-fg/60 tabular-nums">{formatElapsed(sec)}</span>;
+}
+
+function WorkingRow({ elapsed }: { elapsed: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex min-h-[26px] items-center gap-2 text-[13px]">
+      <span className="relative flex size-[22px] shrink-0 items-center justify-center">
+        <span className="absolute size-2 animate-ping rounded-full bg-ayu-a-accent/50" />
+        <span className="relative size-2 rounded-full bg-ayu-accent" />
+      </span>
+      <span className="text-ayu-a-fg/60">{t('ensocode.demo.generating')}</span>
+      {elapsed && <Elapsed />}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Timeline (shared by desktop and phone)
+// ---------------------------------------------------------------------------
+
+type Row = { s: Step; idx: number };
+type Item = { kind: 'row'; row: Row; done: boolean } | { kind: 'fold'; key: number; rows: Row[] };
+
+/** tool-like rows drawn as round nodes and chained by a vertical line */
+const isStepItem = (item: Item) =>
+  item.kind === 'fold' ||
+  (['tool', 'dispatch', 'coworker'].includes(item.row.s.type) && item.row.s.toolContent?.kind !== 'todos');
+const isTightItem = (item: Item) => isStepItem(item) || (item.kind === 'row' && item.row.s.type === 'thinking');
+
+function Timeline({
+  name,
+  model,
+  script,
+  step,
+  approval,
+  instant,
+  elapsed = true,
+}: {
+  name: string;
+  model: string;
+  script: Step[];
+  step: number;
+  approval?: Approval;
+  instant: boolean;
+  elapsed?: boolean;
+}) {
+  const [expandedFolds, setExpandedFolds] = useState<Set<number>>(new Set());
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [step]);
+
+  const running = step < script.length;
+  const visible = script
+    .slice(0, step)
+    .map((s, idx) => ({ s, idx }))
+    .filter(({ s }) => !(s.skipIfRejected && approval === 'rejected'));
+  // agent-done folds into its dispatch row (running → finished with result)
+  const finished = new Map(visible.filter(({ s }) => s.type === 'agent-done').map(({ s, idx }) => [s.name!, { idx, result: s.result }]));
+  const rows = visible.filter(({ s }) => !['goal', 'approval', 'agent-done'].includes(s.type));
+  const liveFrom = running
+    ? rows.reduce((last, { s }, i) => (s.type === 'user' || s.type === 'text' ? i : last), -1)
+    : rows.length;
+  const foldable = (i: number) => i < liveFrom && ['thinking', 'tool', 'dispatch', 'coworker'].includes(rows[i].s.type);
+  const items: Item[] = [];
+  for (let i = 0; i < rows.length; ) {
+    let end = i;
+    while (end < rows.length && foldable(end)) end += 1;
+    if (end - i >= 2) {
+      const key = rows[i].idx;
+      items.push({ kind: 'fold', key, rows: rows.slice(i, end) });
+      if (expandedFolds.has(key)) items.push(...rows.slice(i, end).map((row) => ({ kind: 'row' as const, row, done: true })));
+      i = end;
+    } else {
+      items.push({ kind: 'row', row: rows[i], done: false });
+      i += 1;
+    }
+  }
+  const toggleFold = (key: number) =>
+    setExpandedFolds((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+
+  const renderRow = ({ s, idx }: Row, done: boolean) => {
+    switch (s.type) {
+      case 'user':
+        return <UserBubble text={s.content!} />;
+      case 'thinking':
+        return <ThinkingRow text={s.content!} live={!instant && !done && idx === step - 1 && running} ms={script[idx + 1]?.gap ?? 1000} />;
+      case 'text':
+        return <AgentText text={s.content!} />;
+      case 'tool':
+        return <ToolRow step={s} instant={instant || done} />;
+      case 'dispatch':
+      case 'coworker': {
+        const end = finished.get(s.name!);
+        return (
+          <SubagentRow
+            summary={s.type === 'dispatch' ? s.task! : s.name!}
+            result={end?.result}
+            ms={end && sumGaps(script, idx + 1, end.idx + 1)}
+          />
+        );
+      }
+      case 'tasknote':
+        return <TaskNoteRow text={s.content!} />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+      <div className={clsx(CHAT_COL, 'pt-4 pb-4 [overflow-wrap:anywhere]')}>
+        {items.map((item, i) => {
+          const prev = items[i - 1];
+          const next = items[i + 1];
+          const reply =
+            (item.kind === 'fold' || !['user', 'tasknote'].includes(item.row.s.type)) &&
+            (!prev || (prev.kind === 'row' && prev.row.s.type === 'user'));
+          const isStep = isStepItem(item);
+          const linkPrev = isStep && !reply && prev !== undefined && isStepItem(prev);
+          const linkNext = isStep && next !== undefined && isStepItem(next);
+          const gap = !next ? '' : isTightItem(item) ? (isTightItem(next) ? 'pb-1' : 'pb-3') : 'pb-4';
+          const key = item.kind === 'fold' ? `fold-${item.key}` : `${item.row.idx}-${item.done ? 'x' : ''}`;
+          return (
+            <motion.div
+              key={key}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className={clsx('relative', gap)}
+            >
+              {reply && <ReplyHeader name={name} model={model} />}
+              <div className="relative">
+                {linkPrev && <span className="absolute top-[-4px] left-[10.5px] h-2 w-px bg-ayu-a-fg/[.12]" />}
+                {item.kind === 'fold' ? (
+                  <FoldRow
+                    steps={item.rows.map(({ s }) => s)}
+                    ms={sumGaps(script, item.rows[0].idx, item.rows[item.rows.length - 1].idx + 1)}
+                    expanded={expandedFolds.has(item.key)}
+                    onToggle={() => toggleFold(item.key)}
+                  />
+                ) : (
+                  renderRow(item.row, item.done)
+                )}
+              </div>
+              {linkNext && <span className="absolute top-[26px] bottom-0 left-[10.5px] w-px bg-ayu-a-fg/[.12]" />}
+            </motion.div>
+          );
+        })}
+        {running && (
+          <div className={clsx(items.length > 0 && 'pt-4')}>
+            <WorkingRow elapsed={elapsed} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -571,17 +890,17 @@ function DemoGoalBar({ text, turns, paused, onTogglePause, onClear }: {
 }) {
   const { t } = useTranslation();
   return (
-    <div className="mb-1 flex items-center gap-2 rounded-lg border border-ayu-line/60 bg-ayu-line/20 px-2.5 py-1.5 text-xs text-ayu-fg">
-      <Target className="h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
+    <div className={clsx('mb-1 flex items-center gap-2 rounded-lg border bg-ayu-a-fg/[.02] px-2.5 py-1.5 text-xs text-ayu-fg', BORDER)}>
+      <Target className="h-3.5 w-3.5 shrink-0 text-ayu-a-fg/60" />
       <span className="min-w-0 flex-1 truncate">{text}</span>
-      <span className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', paused ? 'bg-ayu-func' : 'bg-ayu-string animate-pulse')} />
-      <span className="shrink-0 font-mono text-[10px] text-ayu-fg/60 tabular-nums">
+      <span className={clsx('h-1.5 w-1.5 shrink-0 rounded-full', paused ? 'bg-ayu-yellow' : 'animate-pulse bg-ayu-green')} />
+      <span className="shrink-0 font-mono text-[10px] text-ayu-a-fg/60 tabular-nums">
         {paused ? t('ensocode.demo.paused') : t('ensocode.demo.working')} · {turns}/25
       </span>
-      <button type="button" onClick={onTogglePause} className="shrink-0 rounded p-0.5 text-ayu-fg/60 hover:text-ayu-fg">
+      <button type="button" onClick={onTogglePause} className="shrink-0 rounded p-0.5 text-ayu-a-fg/60 transition-colors hover:text-ayu-fg">
         {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
       </button>
-      <button type="button" onClick={onClear} className="shrink-0 rounded p-0.5 text-ayu-fg/60 hover:text-ayu-tag">
+      <button type="button" onClick={onClear} className="shrink-0 rounded p-0.5 text-ayu-a-fg/60 transition-colors hover:text-ayu-red">
         <X className="h-3.5 w-3.5" />
       </button>
     </div>
@@ -594,32 +913,30 @@ function DemoTodoBar({ todos, onHide }: { todos: Todo[]; onHide: () => void }) {
   const done = todos.filter((todo) => todo.status === 'completed').length;
   const current = todos.find((todo) => todo.status === 'in_progress') ?? todos.find((todo) => todo.status === 'pending');
   return (
-    <div className="mb-1 rounded-lg border border-ayu-line/60 bg-ayu-line/20 px-2.5 py-1.5 text-xs text-ayu-fg">
+    <div className={clsx('mb-1 rounded-lg border bg-ayu-a-fg/[.02] px-2.5 py-1.5 text-xs text-ayu-fg', BORDER)}>
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
           className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
-          <ListTodo className="h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
+          <ListTodo className="h-3.5 w-3.5 shrink-0 text-ayu-a-fg/60" />
           <span className="shrink-0 font-medium">{t('ensocode.demo.todos')}</span>
-          <span className="shrink-0 font-mono text-[10px] text-ayu-fg/60 tabular-nums">
+          <span className="shrink-0 font-mono text-[10px] text-ayu-a-fg/60 tabular-nums">
             {done}/{todos.length}
           </span>
-          {!expanded && current && (
-            <span className="min-w-0 flex-1 truncate text-ayu-fg/60">{current.content}</span>
-          )}
+          {!expanded && current && <span className="min-w-0 flex-1 truncate text-ayu-a-fg/60">{current.content}</span>}
           {expanded ? (
-            <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
+            <ChevronDown className="ml-auto h-3.5 w-3.5 shrink-0 text-ayu-a-fg/60" />
           ) : (
-            <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-ayu-fg/60" />
+            <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-ayu-a-fg/60" />
           )}
         </button>
         <button
           type="button"
           title={t('ensocode.demo.todosHide')}
           onClick={onHide}
-          className="shrink-0 rounded p-0.5 text-ayu-fg/60 transition-colors hover:text-ayu-fg"
+          className="shrink-0 rounded p-0.5 text-ayu-a-fg/60 transition-colors hover:text-ayu-fg"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -636,39 +953,39 @@ function DemoTodoBar({ todos, onHide }: { todos: Todo[]; onHide: () => void }) {
 function DemoApprovalBar({ command, onRespond }: { command: string; onRespond: (v: 'approved' | 'rejected') => void }) {
   const { t } = useTranslation();
   return (
-    <div className="mb-1 rounded-lg border border-ayu-line/60 bg-ayu-line/20 px-2.5 py-2">
+    <div className={clsx('mb-1 rounded-lg border bg-ayu-a-fg/[.02] px-2.5 py-2', BORDER)}>
       <div className="flex items-center gap-2 text-xs">
-        <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-ayu-func" />
-        <span className="shrink-0 text-[10px] font-medium tracking-wide text-ayu-fg/60 uppercase">
+        <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-ayu-yellow" />
+        <span className="shrink-0 text-[10px] font-medium tracking-wide text-ayu-a-fg/60 uppercase">
           {t('ensocode.demo.approval.title')}
         </span>
-        <span className="flex min-w-0 items-center gap-1 text-ayu-fg/60">
+        <span className="flex min-w-0 items-center gap-1 text-ayu-a-fg/60">
           <TerminalSquare className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate font-mono">bash</span>
         </span>
       </div>
-      <pre className="mt-1.5 max-h-24 overflow-auto rounded-md bg-ayu-line/30 px-2 py-1.5 font-mono text-xs text-ayu-fg/80 whitespace-pre-wrap">
+      <pre className="mt-1.5 max-h-24 overflow-auto rounded-md bg-ayu-a-fg/[.04] px-2 py-1.5 font-mono text-xs text-ayu-fg whitespace-pre-wrap">
         {command}
       </pre>
       <div className="mt-2 flex items-center justify-end gap-1.5">
         <button
           type="button"
           onClick={() => onRespond('rejected')}
-          className="rounded-md px-2.5 py-1 text-xs text-ayu-tag transition-colors hover:bg-ayu-tag/10"
+          className="rounded-md whitespace-nowrap px-2.5 py-1 text-xs text-ayu-red transition-colors hover:bg-ayu-a-red/10"
         >
           {t('ensocode.demo.approval.deny')}
         </button>
         <button
           type="button"
           onClick={() => onRespond('approved')}
-          className="rounded-md px-2.5 py-1 text-xs text-ayu-fg/60 transition-colors hover:bg-ayu-line/30 hover:text-ayu-fg"
+          className="rounded-md whitespace-nowrap px-2.5 py-1 text-xs text-ayu-a-fg/60 transition-colors hover:bg-ayu-a-fg/[.06] hover:text-ayu-fg"
         >
           {t('ensocode.demo.approval.allowSession')}
         </button>
         <button
           type="button"
           onClick={() => onRespond('approved')}
-          className="rounded-md bg-ayu-accent px-2.5 py-1 text-xs font-medium text-white transition-colors hover:opacity-90"
+          className="rounded-md whitespace-nowrap bg-ayu-fg px-2.5 py-1 text-xs font-medium text-ayu-panel transition-opacity hover:opacity-90"
         >
           {t('ensocode.demo.approval.allow')}
         </button>
@@ -678,7 +995,117 @@ function DemoApprovalBar({ command, onRespond }: { command: string; onRespond: (
 }
 
 // ---------------------------------------------------------------------------
-// Chat area (timeline player + bars + composer)
+// Composer + status line
+// ---------------------------------------------------------------------------
+
+function Composer({ model, running, locked, compact = false }: { model: string; running: boolean; locked: boolean; compact?: boolean }) {
+  const { t } = useTranslation();
+  const [modeIdx, setModeIdx] = useState(1);
+  const ModeIcon = approvalModes[modeIdx].icon;
+  const pill =
+    'flex h-7 items-center gap-1 rounded-lg px-2 text-xs text-ayu-a-fg/60 transition-colors hover:bg-ayu-a-fg/[.05] hover:text-ayu-fg';
+  return (
+    <div className={clsx('rounded-2xl border bg-ayu-panel shadow-sm', BORDER)}>
+      <div className="truncate px-4 pt-3.5 pb-3 text-sm text-ayu-a-fg/45">
+        {locked
+          ? t('ensocode.demo.composer.locked')
+          : running
+            ? t('ensocode.demo.composer.running')
+            : t('ensocode.demo.composer.idle')}
+      </div>
+      <div className="flex items-center justify-between gap-1.5 px-2 pt-0.5 pb-2">
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+          <button
+            type="button"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ayu-a-fg/60 transition-colors hover:bg-ayu-a-fg/[.06] hover:text-ayu-fg"
+          >
+            <ImagePlus className="h-3.5 w-3.5" />
+          </button>
+          {compact ? (
+            <button type="button" className={clsx(pill, 'shrink-0 text-[11px]')}>
+              {model}
+              <ChevronDown className="h-3 w-3 opacity-60" />
+            </button>
+          ) : (
+            <>
+              <button type="button" className={clsx(pill, 'shrink-0')}>
+                <Layers className="h-3.5 w-3.5" />
+                {t('ensocode.demo.global')}
+              </button>
+              <button type="button" className={clsx(pill, 'shrink-0 opacity-60')}>
+                <House className="h-3.5 w-3.5" />
+                {t('ensocode.demo.local')}
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setModeIdx((i) => (i + 1) % approvalModes.length)}
+                title={t('ensocode.demo.modesHint')}
+                className={clsx(pill, 'shrink-0')}
+              >
+                <ModeIcon className="h-3.5 w-3.5" />
+                {t(`ensocode.demo.modes.${approvalModes[modeIdx].key}`)}
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </button>
+              <button type="button" className={clsx(pill, 'min-w-0')}>
+                <span className="truncate">{model}</span>
+                <Brain className="h-3 w-3 shrink-0 text-ayu-accent" />
+                <span className="shrink-0 text-ayu-accent">{t('ensocode.demo.med')}</span>
+                <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
+              </button>
+            </>
+          )}
+        </div>
+        {running ? (
+          <button
+            type="button"
+            className={clsx('flex size-8 shrink-0 items-center justify-center rounded-[10px] border bg-ayu-panel text-ayu-fg shadow-sm', BORDER)}
+          >
+            <CircleStop className="h-4 w-4" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-ayu-accent text-ayu-panel opacity-35"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatsLine({ model, step }: { model: string; step: number }) {
+  const { t } = useTranslation();
+  const context = Math.min(6 + step, 90);
+  const segment = 'flex shrink-0 items-center gap-1';
+  return (
+    <div className="flex h-7 items-center justify-center gap-3 overflow-hidden px-2 text-[11px] text-ayu-a-fg/55 tabular-nums">
+      <span className={segment}>
+        <Cpu className="h-3 w-3 opacity-75" />
+        {model} · {t('ensocode.demo.med')}
+      </span>
+      <span className={segment}>
+        <Coins className="h-3 w-3 opacity-75" />↑{40 + step * 6}K ↓{(0.3 + step * 0.1).toFixed(1)}K
+      </span>
+      <span className={segment}>
+        <Database className="h-3 w-3 opacity-75" />
+        88%
+      </span>
+      <span className={segment}>
+        <span className="h-1 w-7 overflow-hidden rounded-full bg-ayu-a-fg/20">
+          <span className="block h-full rounded-full bg-ayu-a-fg/70" style={{ width: `${context}%` }} />
+        </span>
+        {context}%
+      </span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Chat area (script player + timeline + dock)
 // ---------------------------------------------------------------------------
 
 function ChatArea({
@@ -706,11 +1133,10 @@ function ChatArea({
   const [goalPaused, setGoalPaused] = useState(false);
   const [goalCleared, setGoalCleared] = useState(false);
   const [hiddenTodo, setHiddenTodo] = useState(-1);
-  const [expandedFolds, setExpandedFolds] = useState<Set<number>>(new Set());
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const approvalIdx = script.findIndex((s) => s.type === 'approval');
-  const waitingForApproval = approvalIdx >= 0 && step > approvalIdx && !approval;
+  const waitingForApproval =
+    Boolean(onApproval) && approvalIdx >= 0 && step > approvalIdx && (!approval || approval === 'pending');
 
   useEffect(() => {
     if (step >= script.length || waitingForApproval || goalPaused) return;
@@ -731,16 +1157,10 @@ function ChatArea({
     return () => clearTimeout(timer);
   }, [waitingForApproval, onApproval]);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [step]);
-
   const visible = script
     .slice(0, step)
     .map((s, idx) => ({ s, idx }))
     .filter(({ s }) => !(s.skipIfRejected && approval === 'rejected'));
-
   const goalStep = visible.find(({ s }) => s.type === 'goal')?.s;
   const lastTodo = [...visible].reverse().find(({ s }) => s.toolContent?.kind === 'todos');
   const pinnedTodos =
@@ -749,350 +1169,132 @@ function ChatArea({
     lastTodo.s.toolContent.items.some((todo) => todo.status !== 'completed')
       ? lastTodo.s.toolContent.items
       : null;
-  const approvalStep = approvalIdx >= 0 && step > approvalIdx ? script[approvalIdx] : null;
   const running = step < script.length;
-
-  const rows = visible.filter(({ s }) => s.type !== 'goal' && s.type !== 'approval');
-  const liveFrom = running
-    ? rows.reduce((last, { s }, i) => (s.type === 'user' || s.type === 'text' ? i : last), -1)
-    : rows.length;
-  const foldable = (i: number) =>
-    i < liveFrom && ['thinking', 'tool', 'dispatch', 'agent-done', 'coworker'].includes(rows[i].s.type);
-  const items: ({ kind: 'row'; row: (typeof rows)[number]; done: boolean } | { kind: 'fold'; key: number; steps: Step[] })[] = [];
-  for (let i = 0; i < rows.length; ) {
-    let end = i;
-    while (end < rows.length && foldable(end)) end += 1;
-    if (end - i >= 2) {
-      const key = rows[i].idx;
-      items.push({ kind: 'fold', key, steps: rows.slice(i, end).map(({ s }) => s) });
-      if (expandedFolds.has(key)) items.push(...rows.slice(i, end).map((row) => ({ kind: 'row' as const, row, done: true })));
-      i = end;
-    } else {
-      items.push({ kind: 'row', row: rows[i], done: false });
-      i += 1;
-    }
-  }
-  const toggleFold = (key: number) =>
-    setExpandedFolds((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(key)) next.add(key);
-      return next;
-    });
 
   return (
     <>
-      {/* Timeline */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {/* Agent identity header */}
-        <div className="flex items-center gap-3 pb-1">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#fca5a5] via-[#f472b6] to-[#a78bfa]" />
-          <div>
-            <div className="text-sm font-semibold text-ayu-fg">{name}</div>
-            <div className="text-xs text-ayu-fg/60">{model}</div>
-          </div>
+      <Timeline name={name} model={model} script={script} step={step} approval={approval} instant={instant} />
+      <div className="shrink-0 pt-1">
+        <div className={CHAT_COL}>
+          {waitingForApproval && <DemoApprovalBar command={script[approvalIdx].command!} onRespond={onApproval!} />}
+          {goalStep && !goalCleared && (
+            <DemoGoalBar
+              text={goalStep.content!}
+              turns={Math.min(step, 25)}
+              paused={goalPaused}
+              onTogglePause={() => setGoalPaused((v) => !v)}
+              onClear={() => setGoalCleared(true)}
+            />
+          )}
+          {pinnedTodos && <DemoTodoBar todos={pinnedTodos} onHide={() => setHiddenTodo(lastTodo!.idx)} />}
+          <Composer model={model} running={running} locked={waitingForApproval} />
         </div>
-
-        {items.map((item) => {
-          if (item.kind === 'fold') {
-            return (
-              <motion.div key={`fold-${item.key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-                <FoldRow steps={item.steps} expanded={expandedFolds.has(item.key)} onToggle={() => toggleFold(item.key)} />
-              </motion.div>
-            );
-          }
-          const { s, idx } = item.row;
-          return (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {s.type === 'user' && <UserBubble text={s.content!} />}
-              {s.type === 'thinking' && <ThinkingRow text={s.content!} live={!instant && !item.done && idx === step - 1 && running} />}
-              {s.type === 'text' && <AgentText name={name} text={s.content!} />}
-              {s.type === 'tool' && <ToolRow step={s} instant={instant || item.done} />}
-              {s.type === 'dispatch' && <DispatchRow name={s.name!} task />}
-              {s.type === 'agent-done' && <AgentDoneRow name={s.name!} result={s.result} />}
-              {s.type === 'coworker' && <DispatchRow name={s.name!} />}
-              {s.type === 'tasknote' && <TaskNoteRow text={s.content!} />}
-            </motion.div>
-          );
-        })}
-
-        {running && !waitingForApproval && (
-          <div className="flex items-center gap-1.5 px-1">
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ayu-fg/40" />
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ayu-fg/40 [animation-delay:0.15s]" />
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-ayu-fg/40 [animation-delay:0.3s]" />
-          </div>
-        )}
-      </div>
-
-      {/* Bars + composer */}
-      <div className="shrink-0 px-3 pb-3 pt-1">
-        {approvalStep && (!approval || approval === 'pending') && onApproval && (
-          <DemoApprovalBar command={approvalStep.command!} onRespond={onApproval} />
-        )}
-        {goalStep && !goalCleared && (
-          <DemoGoalBar
-            text={goalStep.content!}
-            turns={Math.min(step, 25)}
-            paused={goalPaused}
-            onTogglePause={() => setGoalPaused((v) => !v)}
-            onClear={() => setGoalCleared(true)}
-          />
-        )}
-        {pinnedTodos && <DemoTodoBar todos={pinnedTodos} onHide={() => setHiddenTodo(lastTodo!.idx)} />}
-        <Composer model={model} running={running} />
+        <StatsLine model={model} step={step} />
       </div>
     </>
   );
 }
 
-function Composer({ model, running }: { model: string; running: boolean }) {
-  const { t } = useTranslation();
-  const [modeIdx, setModeIdx] = useState(1);
-  return (
-    <div className="rounded-xl border border-ayu-line bg-ayu-panel shadow-sm transition-colors">
-      <div className="flex items-center gap-1.5 px-3.5 pt-3 pb-2">
-        <span className="flex-1 text-sm text-ayu-fg/35 truncate">{t('ensocode.demo.composer')}</span>
-        <Mic className="h-4 w-4 text-ayu-fg/40" />
-      </div>
-      <div className="flex items-center justify-between gap-1.5 px-1.5 pb-1.5">
-        <div className="flex items-center gap-1">
-          <button type="button" className="rounded-md p-1.5 text-ayu-fg/60 hover:bg-ayu-line/30 hover:text-ayu-fg">
-            <Paperclip className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setModeIdx((i) => (i + 1) % approvalModes.length)}
-            title={t('ensocode.demo.modesHint')}
-            className="flex items-center gap-1 rounded-md border border-ayu-line bg-ayu-line/20 px-2 py-1 text-[11px] text-ayu-fg/80 hover:bg-ayu-line/30 cursor-pointer"
-          >
-            {t(`ensocode.demo.modes.${approvalModes[modeIdx].key}`)}
-            <ChevronDown className="h-3 w-3 text-ayu-fg/60" />
-          </button>
-          <button type="button" className="flex items-center gap-1 rounded-md border border-ayu-line bg-ayu-line/20 px-2 py-1 text-[11px] text-ayu-fg/80">
-            {model}
-            <ChevronDown className="h-3 w-3 text-ayu-fg/60" />
-          </button>
-        </div>
-        {running ? (
-          <button type="button" className="h-7 w-7 shrink-0 rounded-lg border border-ayu-line flex items-center justify-center text-ayu-fg/60 hover:text-ayu-fg">
-            <CircleStop className="h-4 w-4" />
-          </button>
-        ) : (
-          <button type="button" className="h-7 w-7 shrink-0 rounded-lg bg-ayu-accent flex items-center justify-center text-white hover:opacity-90">
-            <ArrowUp className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
-// Phone companion — mirrors the desktop session timeline (chat style)
+// Phone companion — the real PWA ChatScreen mirroring the desktop session
 // ---------------------------------------------------------------------------
 
-function PhoneAgentRow({ children, badge }: { children: ReactNode; badge?: ReactNode }) {
-  return (
-    <div className="flex items-start gap-1.5">
-      <AgentAvatar className="w-4 h-4 mt-px" />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1">
-          <span className="text-[8px] font-semibold text-ayu-fg/60">EnsoCode</span>
-          {badge}
-        </div>
-        <div className="text-[9px] leading-snug mt-px flex flex-col text-ayu-fg/80">{children}</div>
-      </div>
-    </div>
+type AgentTab = { key: string; name: string; mode: ChildAgent['mode']; done: boolean };
+
+const tabClass = (active: boolean) =>
+  clsx(
+    'flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors cursor-pointer',
+    active ? 'bg-ayu-a-fg/[.06] font-medium text-ayu-fg' : 'text-ayu-a-fg/60 hover:bg-ayu-a-fg/[.04] hover:text-ayu-fg',
   );
-}
 
 function PhoneCompanion({
   session,
+  project,
+  agents,
   step,
   approval,
   onApproval,
 }: {
   session: Session;
+  project: string;
+  agents: AgentTab[];
   step: number;
   approval: Approval | undefined;
   onApproval: (v: Approval) => void;
 }) {
-  const { t } = useTranslation();
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const visible = session.script
-    .slice(0, step)
-    .filter((s) => !(s.skipIfRejected && approval === 'rejected'));
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [step]);
+  const running = step < session.script.length;
+  const approvalIdx = session.script.findIndex((s) => s.type === 'approval');
+  const pending = approvalIdx >= 0 && step > approvalIdx && (!approval || approval === 'pending');
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 40, rotate: 4 }}
-      animate={{ opacity: 1, y: 0, rotate: 3 }}
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, delay: 0.9 }}
-      whileHover={{ rotate: 0, scale: 1.03 }}
-      className="absolute -bottom-8 right-4 xl:-right-8 w-52 z-30 select-none"
+      className="absolute -bottom-10 -right-16 z-30 hidden w-[236px] select-none xl:block min-[1400px]:-right-[100px]"
     >
-      <div className="rounded-[2rem] border-2 border-ayu-line bg-ayu-panel shadow-2xl overflow-hidden flex flex-col h-[400px] transition-colors">
-        {/* Status bar */}
-        <div className="flex items-center justify-between px-4 pt-2 text-[9px] text-ayu-fg/60 shrink-0">
-          <span className="font-semibold">9:41</span>
-          <div className="w-12 h-3.5 bg-black rounded-full" />
-          <Wifi className="w-3 h-3" />
-        </div>
+      {/* Device bezel is hardware, intentionally not themed */}
+      <div className="rounded-[2.6rem] bg-neutral-900 p-[7px] shadow-2xl ring-1 ring-ayu-a-fg/15">
+        <div className="flex h-[480px] flex-col overflow-hidden rounded-[2.2rem] bg-ayu-panel text-ayu-fg transition-colors duration-300">
+          <div className="flex h-9 shrink-0 items-center justify-between px-6 pt-1 text-[11px] font-semibold">
+            <span>9:41</span>
+            <span className="h-[22px] w-[72px] rounded-full bg-black" />
+            <span className="flex items-center gap-1">
+              <Signal className="h-3 w-3" />
+              <BatteryFull className="h-3.5 w-3.5" />
+            </span>
+          </div>
 
-        {/* App header */}
-        <div className="flex items-center gap-1.5 px-2.5 py-2 border-b border-ayu-line shrink-0">
-          <ChevronLeft className="w-3.5 h-3.5 text-ayu-fg/60" />
-          <div className="min-w-0">
-            <div className="flex items-center gap-1">
-              <span className="text-[10px] font-semibold text-ayu-fg">EnsoCode</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-ayu-string" />
+          <div className="flex min-h-0 flex-1 flex-col" style={{ zoom: 0.68 }}>
+            <div className={clsx('flex shrink-0 items-center gap-1 border-b px-2 py-2', BORDER)}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center text-ayu-a-fg/60">
+                <PanelLeft className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1 text-center">
+                <div className="flex items-center justify-center gap-1.5">
+                  {running && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ayu-green" />}
+                  <span className="truncate text-sm font-medium">{session.title}</span>
+                </div>
+                <div className="truncate font-mono text-[11px] text-ayu-a-fg/60">{project}</div>
+              </div>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center text-ayu-a-fg/60">
+                <SquarePen className="h-4 w-4" />
+              </span>
             </div>
-            <div className="text-[8px] text-ayu-fg/40 flex items-center gap-1">
-              Desktop · {t('ensocode.demo.phone.desktop')}
-              <Lock className="w-2 h-2 text-ayu-string" />
+
+            <div className={clsx('flex shrink-0 gap-1 overflow-hidden border-b px-2 py-1', BORDER)}>
+              <span className={tabClass(true)}>
+                <MessageCircle className="h-3 w-3 shrink-0" />
+                <span className="max-w-40 truncate">{session.title}</span>
+              </span>
+              {agents.map((a) => (
+                <span key={a.key} className={tabClass(false)}>
+                  {a.mode === 'task' ? <Zap className="h-3 w-3 shrink-0" /> : <Bot className="h-3 w-3 shrink-0" />}
+                  <span className="max-w-32 truncate">{a.name}</span>
+                  <StatusDot running={!a.done} />
+                </span>
+              ))}
+            </div>
+
+            <Timeline
+              key={session.id}
+              name="Enso"
+              model={session.model}
+              script={session.script}
+              step={step}
+              approval={approval}
+              instant={!running}
+              elapsed={false}
+            />
+
+            <div className="shrink-0 px-3 pt-1 pb-2">
+              {pending && <DemoApprovalBar command={session.script[approvalIdx].command!} onRespond={onApproval} />}
+              <Composer compact model={session.model} running={running} locked={pending} />
             </div>
           </div>
-          <RefreshCw className="w-3 h-3 text-ayu-fg/50 ml-auto" />
-        </div>
 
-        {/* Timeline mirror */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-2 py-2 space-y-2">
-          {visible.map((s, i) => (
-            <motion.div
-              key={`${session.id}-${i}`}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              {s.type === 'user' && (
-                <div className="flex justify-end">
-                  <div className="max-w-[85%] rounded-xl rounded-br-sm bg-ayu-accent px-2.5 py-1.5 text-[9px] text-white leading-snug">
-                    {s.content}
-                  </div>
-                </div>
-              )}
-
-              {s.type === 'thinking' && (
-                <PhoneAgentRow>
-                  <span className="text-ayu-fg/40 italic">{t('ensocode.demo.phone.thinking')}</span>
-                </PhoneAgentRow>
-              )}
-
-              {s.type === 'goal' && (
-                <div className="rounded-lg bg-ayu-line/20 border border-ayu-line px-2 py-1.5">
-                  <div className="flex items-center gap-1 text-[8px] text-ayu-fg/60">
-                    <Target className="w-2.5 h-2.5" />
-                    {t('ensocode.demo.goal')}
-                    <span className="ml-auto">{Math.min(step, 25)}/25</span>
-                  </div>
-                  <p className="text-[9px] text-ayu-fg font-medium leading-snug mt-0.5">{s.content}</p>
-                  <div className="mt-1 h-0.5 rounded-full bg-ayu-line overflow-hidden">
-                    <div className="h-full bg-ayu-string transition-all duration-500" style={{ width: `${Math.min((step / 25) * 100, 100)}%` }} />
-                  </div>
-                </div>
-              )}
-
-              {s.type === 'tool' && (
-                <PhoneAgentRow
-                  badge={<span className="text-[7px] px-1 py-px rounded bg-ayu-string/15 text-ayu-string font-medium">{t('ensocode.demo.phone.done')}</span>}
-                >
-                  <span>{t(`ensocode.demo.tools.${s.tool}`)}</span>
-                  <span className="text-ayu-fg/40 font-mono truncate">{s.target}</span>
-                </PhoneAgentRow>
-              )}
-
-              {s.type === 'dispatch' && (
-                <PhoneAgentRow
-                  badge={<span className="flex items-center gap-0.5 text-[7px] text-ayu-accent"><span className="w-1 h-1 rounded-full bg-ayu-accent animate-pulse" />live</span>}
-                >
-                  <span>{t('ensocode.demo.subagent')} · {s.name}</span>
-                  <span className="text-ayu-fg/40 truncate">{s.task}</span>
-                </PhoneAgentRow>
-              )}
-
-              {s.type === 'agent-done' && (
-                <PhoneAgentRow
-                  badge={<span className="text-[7px] px-1 py-px rounded bg-ayu-string/15 text-ayu-string font-medium">{t('ensocode.demo.phone.done')}</span>}
-                >
-                  <span>{t('ensocode.demo.subagent')} · {s.name}</span>
-                  <span className="text-ayu-fg/40 truncate">{s.result}</span>
-                </PhoneAgentRow>
-              )}
-
-              {s.type === 'coworker' && (
-                <PhoneAgentRow
-                  badge={<span className="flex items-center gap-0.5 text-[7px] text-ayu-accent"><span className="w-1 h-1 rounded-full bg-ayu-accent animate-pulse" />live</span>}
-                >
-                  <span>{t('ensocode.demo.coworker')} · {s.name}</span>
-                  <span className="text-ayu-fg/40 truncate">{t('ensocode.demo.phone.coworkerTask')}</span>
-                </PhoneAgentRow>
-              )}
-
-              {s.type === 'approval' && (
-                <div className="rounded-lg bg-ayu-func/10 border border-ayu-func/30 px-2 py-1.5">
-                  <div className="flex items-center gap-1 text-[8px] text-ayu-func font-medium">
-                    <ShieldAlert className="w-2.5 h-2.5" />
-                    {t('ensocode.demo.approval.title')}
-                  </div>
-                  <div className="mt-1 font-mono text-[8px] text-ayu-fg/80 bg-ayu-line/30 rounded px-1.5 py-1 truncate">{s.command}</div>
-                  {!approval || approval === 'pending' ? (
-                    <div className="mt-1.5 flex gap-1">
-                      <button
-                        onClick={() => onApproval('approved')}
-                        className="flex-1 rounded bg-ayu-string text-white text-[9px] font-bold py-1 cursor-pointer"
-                      >
-                        {t('ensocode.demo.approval.approve')}
-                      </button>
-                      <button
-                        onClick={() => onApproval('rejected')}
-                        className="flex-1 rounded border border-ayu-tag/60 text-ayu-tag text-[9px] font-bold py-1 cursor-pointer"
-                      >
-                        {t('ensocode.demo.approval.reject')}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className={clsx('mt-1 flex items-center gap-1 text-[8px] font-semibold', approval === 'approved' ? 'text-ayu-string' : 'text-ayu-tag')}>
-                      <Check className="w-2.5 h-2.5" /> {t(`ensocode.demo.approval.${approval}`)}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {s.type === 'tasknote' && (
-                <div className="flex items-center gap-1 text-[8px] text-ayu-fg/40">
-                  <History className="w-2.5 h-2.5" />
-                  <span className="truncate">{s.content}</span>
-                </div>
-              )}
-
-              {s.type === 'text' && (
-                <PhoneAgentRow>
-                  <span className="leading-snug">{s.content}</span>
-                </PhoneAgentRow>
-              )}
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Composer */}
-        <div className="shrink-0 px-2 pb-4 pt-1.5 border-t border-ayu-line">
-          <div className="flex items-center gap-1.5 rounded-full bg-ayu-line/20 border border-ayu-line px-2.5 py-1.5">
-            <span className="flex-1 text-[9px] text-ayu-fg/30 truncate">{t('ensocode.demo.phone.composer')}</span>
-            <Mic className="w-3 h-3 text-ayu-fg/40" />
-            <div className="w-5 h-5 rounded-full bg-ayu-accent flex items-center justify-center">
-              <Send className="w-2.5 h-2.5 text-white" />
-            </div>
+          <div className="flex h-5 shrink-0 items-center justify-center">
+            <span className="h-1 w-24 rounded-full bg-ayu-fg" />
           </div>
         </div>
       </div>
@@ -1104,8 +1306,20 @@ function PhoneCompanion({
 // Main preview
 // ---------------------------------------------------------------------------
 
+function IconButton({ icon: Icon, title }: { icon: LucideIcon; title?: string }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      className="flex h-8 w-8 items-center justify-center rounded-md text-ayu-a-fg/60 transition-colors hover:bg-ayu-a-fg/[.06] hover:text-ayu-fg"
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+}
+
 export function EnsoCodeDemoPreview() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeSessionId, setActiveSessionId] = useState('cart');
   const [viewingAgent, setViewingAgent] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, number>>({});
@@ -1142,16 +1356,45 @@ export function EnsoCodeDemoPreview() {
       const done = played.has(key) || isPlayed;
       return { ...a, key, done, step: done ? a.script.length : (progress[key] ?? 0) };
     });
-  const tabClass = (active: boolean) =>
-    clsx(
-      'flex min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors cursor-pointer',
-      active ? 'bg-ayu-line/40 font-medium text-ayu-fg' : 'text-ayu-fg/60 hover:bg-ayu-line/20',
-    );
 
-  const sessionStatus = (s: Session): 'running' | 'waiting' | 'done' => {
-    if (played.has(s.id)) return 'done';
+  const sessionState = (s: Session): 'running' | 'waiting' | null => {
+    if (played.has(s.id)) return null;
     if (approvals[s.id] === 'pending') return 'waiting';
-    return 'running';
+    return s.id === activeSessionId ? 'running' : null;
+  };
+  const relativeTime = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'always' });
+  const activeSessions = repos.flatMap((r) => r.sessions).filter((s) => sessionState(s) !== null);
+
+  const sessionRow = (s: Session, tree: boolean) => {
+    const state = sessionState(s);
+    const active = s.id === activeSessionId;
+    return (
+      <button
+        key={s.id}
+        type="button"
+        onClick={() => { setActiveSessionId(s.id); setViewingAgent(null); }}
+        className={clsx(
+          'relative grid w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2 rounded-lg py-1.5 pr-2 pl-2 text-left text-sm transition-colors',
+          active ? 'bg-ayu-a-accent/10 text-ayu-fg' : 'text-ayu-a-fg/60 hover:bg-ayu-a-fg/[.05] hover:text-ayu-fg',
+        )}
+      >
+        {tree && (state ? (
+          <>
+            <span className="absolute top-0 left-[calc(1rem-0.5px)] h-2 w-px bg-ayu-a-fg/[.12]" />
+            <span className="absolute top-6 bottom-0 left-[calc(1rem-0.5px)] w-px bg-ayu-a-fg/[.12]" />
+          </>
+        ) : (
+          <span className="absolute top-0 bottom-0 left-[calc(1rem-0.5px)] w-px bg-ayu-a-fg/[.12]" />
+        ))}
+        <span className="relative flex size-4 shrink-0 items-center justify-center">
+          {state && (
+            <span className={clsx('size-2 rounded-full', state === 'waiting' ? 'bg-ayu-yellow' : 'animate-pulse bg-ayu-accent')} />
+          )}
+        </span>
+        <span className="truncate">{s.title}</span>
+        <span className="shrink-0 text-[10px] text-ayu-a-fg/55 tabular-nums">{relativeTime.format(-s.ago, 'minute')}</span>
+      </button>
+    );
   };
 
   return (
@@ -1162,106 +1405,82 @@ export function EnsoCodeDemoPreview() {
       className="relative w-full max-w-6xl mx-auto"
     >
       {/* Desktop window — ayu tokens, synced with site theme */}
-      <div className="rounded-xl overflow-hidden shadow-2xl border border-ayu-line/50 bg-ayu-panel text-left transition-colors duration-300">
+      <div className={clsx('overflow-hidden rounded-xl border bg-ayu-panel text-left text-ayu-fg shadow-2xl transition-colors duration-300', BORDER)}>
         {/* Title bar */}
-        <div className="relative h-11 border-b border-ayu-line flex items-center px-4 gap-2">
+        <div className={clsx('flex h-11 items-center gap-2 border-b pr-3 pl-4', BORDER)}>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
             <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
             <div className="w-3 h-3 rounded-full bg-[#28c840]" />
           </div>
-          <div className="flex items-center gap-1.5 ml-2">
-            <img src="/ensocode/logo.png" alt="EnsoCode" className="w-4 h-4 rounded" />
-            <span className="text-xs font-medium text-ayu-fg/60">EnsoCode</span>
-          </div>
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <span className="text-xs text-ayu-fg/50">EnsoCode</span>
-          </div>
-          <div className="ml-auto text-ayu-fg/50">
-            <Folder className="w-3.5 h-3.5" />
+          <span className="ml-4 text-sm font-medium text-ayu-a-fg/60">EnsoCode</span>
+          <div className="ml-auto flex items-center gap-1 text-ayu-a-fg/60">
+            <span className="flex h-7 w-7 items-center justify-center">
+              <UnfoldHorizontal className="h-4 w-4" />
+            </span>
+            <span className="flex h-7 w-7 items-center justify-center">
+              <PanelRight className="h-4 w-4" />
+            </span>
           </div>
         </div>
 
-        <div className="flex h-[540px]">
+        <div className="flex h-[620px]">
           {/* Sidebar */}
-          <div className="w-60 shrink-0 border-r border-ayu-line bg-ayu-bg/60 flex flex-col transition-colors duration-300">
-            <div className="shrink-0 px-2 py-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-ayu-fg/40" />
-                <div className="h-8 rounded-md border border-ayu-line bg-ayu-panel pl-8 pr-2 flex items-center text-xs text-ayu-fg/40">
-                  {t('ensocode.demo.search')}
+          <div className={clsx('flex w-64 shrink-0 flex-col border-r bg-ayu-bg transition-colors duration-300', BORDER)}>
+            <div className="flex h-12 shrink-0 items-center justify-between pr-3 pl-1.5">
+              <button
+                type="button"
+                className="flex h-7 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs text-ayu-a-fg/60 transition-colors hover:bg-ayu-a-fg/[.06] hover:text-ayu-fg"
+              >
+                <Laptop className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate font-medium">{t('ensocode.demo.thisComputer')}</span>
+                <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
+              </button>
+              <div className="flex items-center">
+                <IconButton icon={Search} />
+                <IconButton icon={Plus} />
+              </div>
+            </div>
+            <div className={clsx('flex shrink-0 items-center border-b px-2 pb-2', BORDER)}>
+              <div className="flex h-[26px] min-w-0 flex-1 items-center gap-2 rounded-full bg-ayu-a-fg/[.05] pl-2.5 text-xs text-ayu-a-fg/60">
+                <TextSearch className="size-3.5 shrink-0" />
+                <span className="truncate">{t('ensocode.demo.search')}</span>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
+              {activeSessions.length > 0 && (
+                <div>
+                  <div className="px-2 py-2 text-xs font-medium text-ayu-a-fg/60">{t('ensocode.demo.active')}</div>
+                  {activeSessions.map((s) => sessionRow(s, false))}
                 </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1 px-3 py-1.5">
-              <span className="text-xs text-ayu-fg/60">{t('ensocode.demo.repos', { count: repos.length })}</span>
-              <div className="ml-auto flex items-center gap-1 text-ayu-fg/40">
-                <ListFilter className="h-3.5 w-3.5" />
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                <Plus className="h-3.5 w-3.5" />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
+              )}
               {repos.map((repo) => (
                 <div key={repo.name}>
-                  <div className="flex items-center gap-1.5 rounded-md px-1.5 py-1.5 text-xs">
-                    <ChevronDown className="h-3 w-3 shrink-0 text-ayu-fg/40" />
-                    <span className="font-semibold text-ayu-fg truncate">{repo.name}</span>
-                    <GitBranch className="h-3 w-3 shrink-0 text-ayu-fg/40" />
-                    <span className="text-ayu-fg/60 truncate">{repo.branch}</span>
-                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ayu-string" />
-                    <span className="ml-auto shrink-0 text-[10px] text-ayu-fg/40">
-                      {t('ensocode.demo.sessions', { count: repo.sessions.length })}
+                  <div className="flex items-center gap-2 rounded-lg px-2 py-2">
+                    <span className="flex size-4 shrink-0 items-center justify-center text-ayu-a-fg/60">
+                      <FolderOpen className="size-4" />
                     </span>
+                    <span className="truncate text-sm font-medium">{repo.name}</span>
                   </div>
-                  <div className="flex flex-col gap-y-0.5">
-                    {repo.sessions.map((s) => {
-                      const status = sessionStatus(s);
-                      const active = s.id === activeSessionId;
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => { setActiveSessionId(s.id); setViewingAgent(null); }}
-                          className={clsx(
-                            'group flex cursor-pointer items-center gap-2 rounded-lg py-1.5 pr-2 pl-8 text-xs transition-colors w-full text-left',
-                            active
-                              ? 'bg-ayu-line/40 text-ayu-fg'
-                              : 'text-ayu-fg/60 hover:bg-ayu-line/20 hover:text-ayu-fg',
-                          )}
-                        >
-                          <span
-                            className={clsx(
-                              'h-1.5 w-1.5 shrink-0 rounded-full',
-                              status === 'running' && 'bg-ayu-string animate-pulse',
-                              status === 'waiting' && 'bg-ayu-func animate-pulse',
-                              status === 'done' && 'bg-ayu-accent',
-                            )}
-                          />
-                          <span className="min-w-0 flex-1 truncate">{s.title}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {repo.sessions.map((s) => sessionRow(s, true))}
                 </div>
               ))}
             </div>
 
-            <div className="shrink-0 flex items-center gap-2 border-t border-ayu-line px-3 py-2.5">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-[10px] font-bold text-white">
-                J
+            <div className={clsx('flex shrink-0 items-center justify-between border-t p-2', BORDER)}>
+              <IconButton icon={PanelLeftClose} />
+              <div className="flex items-center">
+                <IconButton icon={Sparkles} />
+                <IconButton icon={Settings} />
               </div>
-              <span className="text-xs text-ayu-fg/80">j3n5en</span>
-              <SlidersHorizontal className="h-3.5 w-3.5 ml-auto text-ayu-fg/40" />
             </div>
           </div>
 
           {/* Main column */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex min-w-0 flex-1 flex-col">
             {/* Chat header: session tab + child agent tabs + hire + project badge */}
-            <div className="flex items-center gap-1 border-b border-ayu-line px-2 py-1">
+            <div className={clsx('flex items-center gap-1 border-b px-2 py-1', BORDER)}>
               <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]">
                 <button type="button" onClick={() => setViewingAgent(null)} className={tabClass(viewingAgent === null)}>
                   <MessageCircle className="h-3 w-3 shrink-0" />
@@ -1279,12 +1498,12 @@ export function EnsoCodeDemoPreview() {
                 <button
                   type="button"
                   title={t('ensocode.demo.hire')}
-                  className="shrink-0 rounded p-1 text-ayu-fg/60 transition-colors hover:bg-ayu-line/40 hover:text-ayu-fg"
+                  className="shrink-0 rounded p-1 text-ayu-a-fg/60 transition-colors hover:bg-ayu-a-fg/[.06] hover:text-ayu-fg"
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <div className="ml-1.5 hidden h-6 min-w-0 shrink-0 items-center gap-1.5 rounded-full border border-ayu-line px-2 font-mono text-[11.5px] text-ayu-fg/60 sm:flex">
+              <div className={clsx('ml-1.5 hidden h-6 min-w-0 shrink-0 items-center gap-1.5 rounded-full border px-2 font-mono text-[11.5px] text-ayu-a-fg/60 sm:flex', BORDER)}>
                 <Folder className="h-3 w-3 shrink-0" />
                 <span className="max-w-40 truncate">{activeRepo.name}</span>
                 <span className="opacity-40">/</span>
@@ -1298,7 +1517,7 @@ export function EnsoCodeDemoPreview() {
             <div className={clsx('flex-1 flex flex-col min-h-0', viewingAgent !== null && 'hidden')}>
               <ChatArea
                 key={activeSessionId}
-                name="EnsoCode"
+                name="Enso"
                 model={activeSession.model}
                 script={activeSession.script}
                 initialStep={currentStep}
@@ -1331,6 +1550,8 @@ export function EnsoCodeDemoPreview() {
       {/* Phone companion (bottom-right overlay) */}
       <PhoneCompanion
         session={activeSession}
+        project={activeRepo.name}
+        agents={agents}
         step={currentStep}
         approval={approval}
         onApproval={(v) => handleApproval(activeSessionId, v)}
