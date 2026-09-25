@@ -33,7 +33,7 @@ export default {
     },
     ensocode: {
       hero: {
-        badge: "v0.1 Early Access is now available",
+        badge: "v0.2 Early Access is now available",
         title: "One Developer,",
         titleHighlight: "An Agent Fleet",
         subtitle: "A local-first desktop workbench built on Electron + pi. Orchestrate parallel agents across repositories, review diffs right in the timeline, and keep steering from your phone over end-to-end encryption.",

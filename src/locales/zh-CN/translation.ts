@@ -33,7 +33,7 @@ export default {
     },
     ensocode: {
       hero: {
-        badge: "v0.1 抢先体验版现已发布",
+        badge: "v0.2 抢先体验版现已发布",
         title: "一个人，",
         titleHighlight: "带一队 Coding Agent",
         subtitle: "基于 Electron 与 pi 构建的本地 Agent 协同工作台。多仓库并行调度 Subagent 与 Coworker，改动在时间线中透明可审，离座也能通过手机端到端加密同步继续推进。",
